@@ -7,7 +7,8 @@ const BOILERPLATE = {
   HEADERS_AND_FOOTERS: "haedersAndFooters",
   TITLE: "title",
   INFO: "info"
-}
+} 
+
 
 
 class S6BoilerplateService {
