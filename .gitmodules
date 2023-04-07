@@ -1,0 +1,3 @@
+[submodule "gas-base"]
+	path = gas-base
+	url = https://github.com/lomasnz/gas-base.git
