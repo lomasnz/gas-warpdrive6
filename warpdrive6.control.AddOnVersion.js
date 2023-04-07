@@ -1,0 +1,87 @@
+const ADD_ON_NAME_FIELD = "name";
+const ADD_ON_VERSION_FIELD = "version";
+const ADD_ON_NAME = "S6 TOOL BOX";
+const ADD_ON_METADATA_VERSION = "1.1";
+const ADD_ON_METADATA_VERSION_2 = "2.0";
+const ADD_ON_RELEASE = "1.23, 4 April 2023";
+
+const META_DATA = {
+  VALUE_FROM_FOLDER: "YES",
+  VALUE_FROM_PARENT_FOLDER: "PARENT",
+  NOT_VALUE_FROM_FOLDER: "NO"
+}
+
+var HTTPS_STATUS_CODES = {
+  100: { name: "Continue" },
+  101: { name: "Switching Protocols" },
+  102: { name: "Processing" },
+  200: { name: "OK" },
+  201: { name: "Created" },
+  202: { name: "Accepted" },
+  203: { name: "Non-Authoritative Information" },
+  204: { name: "No Content" },
+  205: { name: "Reset Content" },
+  206: { name: "Partial Content" },
+  207: { name: "Multi-Status" },
+  208: { name: "Already Reported" },
+  226: { name: "IM Used" },
+  300: { name: "Multiple Choices" },
+  301: { name: "Moved Permanently" },
+  302: { name: "Found" },
+  303: { name: "See Other" },
+  304: { name: "Not Modified" },
+  305: { name: "Use Proxy" },
+  307: { name: "Temporary Redirect" },
+  308: { name: "Permanent Redirect" },
+  400: { name: "Bad Request" },
+  401: { name: "Unauthorized" },
+  402: { name: "Payment Required" },
+  403: { name: "Forbidden" },
+  404: { name: "Not Found" },
+  405: { name: "Method Not Allowed" },
+  406: { name: "Not Acceptable" },
+  407: { name: "Proxy Authentication Required" },
+  408: { name: "Request Timeout" },
+  409: { name: "Conflict" },
+  410: { name: "Gone" },
+  411: { name: "Length Required" },
+  412: { name: "Precondition Failed" },
+  413: { name: "Payload Too Large" },
+  414: { name: "URI Too Long" },
+  415: { name: "Unsupported Media Type" },
+  416: { name: "Range Not Satisfiable" },
+  417: { name: "Expectation Failed" },
+  418: { name: "I'm a teapot" },
+  421: { name: "Misdirected Request" },
+  422: { name: "Unprocessable Entity" },
+  423: { name: "Locked" },
+  424: { name: "Failed Dependency" },
+  425: { name: "Too Early" },
+  426: { name: "Upgrade Required" },
+  428: { name: "Precondition Required" },
+  429: { name: "Too Many Requests" },
+  431: { name: "Request Header Fields Too Large" },
+  451: { name: "Unavailable For Legal Reasons" },
+  500: { name: "Internal Server Error" },
+  501: { name: "Not Implemented" },
+  502: { name: "Bad Gateway" },
+  503: { name: "Service Unavailable" },
+  504: { name: "Gateway Timeout" },
+  505: { name: "HTTP Version Not Supported" },
+  506: { name: "Variant Also Negotiates" },
+  507: { name: "Insufficient Storage" },
+  508: { name: "Loop Detected" },
+  510: { name: "Not Extended" },
+  511: { name: "Network Authentication Required" },
+  520: { name: "Unknown Error" },
+  521: { name: "Web Server Is Down" },
+  522: { name: "Connection Timed Out" },
+  523: { name: "Origin Is Unreachable" },
+  524: { name: "A Timeout Occurred" },
+  525: { name: "SSL Handshake Failed" },
+  526: { name: "Invalid SSL Certificate" },
+  527: { name: "Railgun Error" },
+  530: { name: "Origin DNS Error" }
+}
+  ;
+
