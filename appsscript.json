@@ -1,0 +1,147 @@
+{
+  "timeZone": "Pacific/Auckland",
+  "dependencies": {
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Drive",
+        "serviceId": "drive",
+        "version": "v2"
+      },
+      {
+        "userSymbol": "AdminDirectory",
+        "serviceId": "admin",
+        "version": "directory_v1"
+      },
+      {
+        "userSymbol": "Sheets",
+        "serviceId": "sheets",
+        "version": "v4"
+      },
+      {
+        "userSymbol": "DriveActivity",
+        "serviceId": "driveactivity",
+        "version": "v2"
+      },
+      {
+        "userSymbol": "Docs",
+        "version": "v1",
+        "serviceId": "docs"
+      }
+    ],
+    "libraries": [
+      {
+        "userSymbol": "LodashGS",
+        "libraryId": "1SQ0PlSMwndIuOAgtVJdjxsuXueECtY9OGejVDS37ckSVbMll73EXf2PW",
+        "version": "5"
+      }
+    ]
+  },
+  "webapp": {
+    "executeAs": "USER_ACCESSING",
+    "access": "DOMAIN"
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/documents",
+    "https://www.googleapis.com/auth/presentations",
+    "https://www.googleapis.com/auth/drive.addons.metadata.readonly",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/forms",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.google.com/m8/feeds",
+    "https://www.googleapis.com/auth/script.locale",
+    "https://www.googleapis.com/auth/drive.file ",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/drive.activity.readonly",
+    "https://www.googleapis.com/auth/admin.directory.user.readonly",
+    "https://www.googleapis.com/auth/admin.directory.group.readonly",
+    "https://www.googleapis.com/auth/script.scriptapp"
+  ],
+  "urlFetchWhitelist": [
+    "https://*.openai.com/",
+    "https://*.openai.com/docs/",
+    "https://*.openai.com/docs/api-reference/",
+    "https://www.abr.business.gov.au/ABN/",
+    "https://www.abr.business.gov.au/ABN/View",
+    "https://drive.google.com/",
+    "https://drive.google.com/drive/",
+    "https://drive.google.com/drive/folders/",
+    "https://google.com/",
+    "https://www.google.com/s2",
+    "https://logo.clearbit.com/",
+    "https://section6.pipedrive.com/",
+    "https://api.bamboohr.com/",
+    "https://api.harvestapp.com/",
+    "https://api.business.govt.nz/",
+    "https://www.nzbn.govt.nz/",
+    "https://abr.business.gov.au/",
+    "https://www.abr.business.gov.au/",
+    "https://connectonline.asic.gov.au/",
+    "https://www.nzbn.govt.nz/",
+    "https://api.openai.com/"
+  ],
+  "runtimeVersion": "V8",
+  "addOns": {
+    "common": {
+      "name": "WARP DRIVE6",
+      "logoUrl": "https://lh3.googleusercontent.com/-BA_sFlZaD40/YtjskUmaleI/AAAAAAAAAqg/2RvA2UkhG6ElCiTKVMZ0fySOKXmjQSFwQCNcBGAsYHQ/s400/32%2Bx%2B32%2Bhopferly-02.png",
+      "layoutProperties": {
+        "primaryColor": "#61166d",
+        "secondaryColor": "#424242"
+      },
+      "useLocaleFromApp": true,
+      "homepageTrigger": {
+        "runFunction": "onHomePage",
+        "enabled": false
+      },
+      "universalActions": [
+        {
+          "label": "Home",
+          "runFunction": "S6UIService_actionGoHome"
+        },
+        {
+          "label": "Settings",
+          "runFunction": "actionEventReviewSettings"
+        },
+        {
+          "label": "Feedback",
+          "openLink": "mailto:paul.armstrong@section6.io?subject=FEEDBACK ON SECTION6 GOOGLE ADD-ON"
+        }
+      ],
+      "openLinkUrlPrefixes": [
+        "https://github.com/googleworkspace/add-ons-samples/",
+        "https://drive.google.com/drive/",
+        "https://section6.atlassian.net/",
+        "https://section6.pipedrive.com/",
+        "https://www.nzbn.govt.nz/"
+      ]
+    },
+    "drive": {
+      "homepageTrigger": {
+        "runFunction": "onDriveHomePage",
+        "enabled": true
+      }
+    },
+    "docs": {
+      "homepageTrigger": {
+        "runFunction": "onEditorHomePage_Docs",
+        "enabled": true
+      }
+    },
+    "sheets": {
+      "homepageTrigger": {
+        "runFunction": "onEditorHomePage_Sheets",
+        "enabled": true
+      }
+    },
+    "slides": {
+      "homepageTrigger": {
+        "runFunction": "onEditorHomePage_Slides",
+        "enabled": true
+      }
+    }
+  }
+}
