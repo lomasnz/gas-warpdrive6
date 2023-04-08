@@ -15,7 +15,7 @@ function bulildAITextProcessorView(param) {
   S6Context.info("bulildAITextProcessorView")
   S6Context.debug("Task type", task);
 
-  var service = AITextProcessorService.newAITextProcessorService();
+  var service = S6AITextProcessor.newS6AITextProcessor();
 
   var section = S6UIService.createSection();
   var sectionWritingStyle = S6UIService.createSection();
@@ -51,7 +51,7 @@ function bulildAITextProcessorView(param) {
 
   var title = DocumentApp.getActiveDocument().getName();
   console.log("call guessWritingType", title);
-  var wt = writingStyleName != EMPTY ? writingStyleName : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value == EMPTY? AITextProcessorService.guessWritingType(title, fields, service.writing) : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value;
+  var wt = writingStyleName != EMPTY ? writingStyleName : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value == EMPTY? S6AITextProcessor.guessWritingType(title, fields, service.writing) : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value;
   console.log("wt guessWritingType", wt);
 
   fieldMap[AI_FIELDS.INSTRUCTION].value = prompt == EMPTY ? fieldMap[AI_FIELDS.INSTRUCTION].value : prompt;
@@ -275,7 +275,7 @@ function bulildDoAITextProcessorView(param) {
     backstoryAssistance: EMPTY,
     systemMessage: EMPTY
   }
-  const aiService = AITextProcessorService.newAITextProcessorService();
+  const aiService = S6AITextProcessor.newS6AITextProcessor();
   input.systemMessage = aiService.properties[AI_FIELDS.AI_PROPERTES.SYSTEM_CONTENT];
 
   console.log("aiService.properties", aiService.properties);
@@ -289,7 +289,7 @@ function bulildDoAITextProcessorView(param) {
   }
   var fieldMap = S6Utility.mapFields(fields);
   input.instruction = fieldMap[AI_FIELDS.INSTRUCTION].value;
-  var variables = AITextProcessorService.findUserVariables(input.instruction);
+  var variables = S6AITextProcessor.findUserVariables(input.instruction);
   console.log("start it");
   if (variables.length > 0) {
     return S6UIService.createNotification("You need to replace " + variables + " in your Instructions.");
