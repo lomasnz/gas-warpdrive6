@@ -6,7 +6,7 @@ class WarpDrive6UIController {
     WarpDrive6UIController.initUserOverides();
     //
     S6Context.addEvent(actionEventDefault, null, S6EventSettings.LogDebugOn, S6EventSettings.LogInfoOn)
-    S6Context.addEvent(testAction, testBuildView, S6EventSettings.LogInfoOn, S6EventSettings.LogDebugOn, S6EventSettings.TimeWarningAt5Seconds);
+    
     // events that are triggered by the ui
     S6Context.addEvent(onDriveHomePage, onDriveHomePageView);
     S6Context.addEvent(onDriveSelectItemHomePage, onDriveSelectItemHomePageView);
