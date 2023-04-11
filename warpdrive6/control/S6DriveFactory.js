@@ -278,7 +278,7 @@ class S6DriveFactory {
     var result;
     var file;
 
-    //var folderName = folder.getName()
+    var folderName = folder.getName()
     S6Context.debug(`copyFileWorker Create file name[${name}] from url[${url}] on folder[${folderName}]`);
     try {
       file = app.openByUrl(url);

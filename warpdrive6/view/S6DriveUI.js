@@ -164,11 +164,17 @@ function buidEditView(param) {
   var secHelp;
   if (vars.createType == EditType.TEMPLATE) {
     const t = entity.templateFromId(param.getValue(PARAM.TEMPLATE_ID));
+    const templateUrl = S6MasterTemplate.lookupUrl(t[ENTITY.TEMPLATE_ATTR.URL], t[ENTITY.FIELDS]);
     if (t[ENTITY.TEMPLATE_ATTR.IS_FOLDER] == NO) {
-      const templateUrl = S6MasterTemplate.lookupUrl(t[ENTITY.TEMPLATE_ATTR.URL], t[ENTITY.FIELDS]);
-      sectionTemplate.addWidget(S6UIService.createFileLabelFromUrl(t[ENTITY.TEMPLATE_ATTR.DESC], templateUrl));
-      sectionTemplate.addWidget(S6UIService.createDivider());
-      sectionTemplate.addWidget(S6UIService.createThumbnailImageFromUrl(templateUrl));
+      let file = S6DriveApp.getFileByUrl(templateUrl);
+      if (file) {
+        sectionTemplate.addWidget(S6UIService.createFileLabelFromUrl(t[ENTITY.TEMPLATE_ATTR.DESC], templateUrl));
+        sectionTemplate.addWidget(S6UIService.createDivider());
+        sectionTemplate.addWidget(S6UIService.createThumbnailImageFromFile(file));
+      }
+      else {
+        return S6UIService.createNotification("The template does not exists. The properties for this need checking");
+      }
     }
     else {
       //sectionTemplate.addWidget(S6UIService.createImage(ICON_DRIVE_FOLDER));
@@ -230,12 +236,12 @@ function buildTemplateEditorWorker_(entity, instance, param) {
   }
 
   const templates = entity.clonedUpdateTemplates(instance.data[INSTANCE.FIELDS])
-  S6Context.debug("Cloned templates",JSON.stringify(templates));
-  S6Context.debug("Original templates",JSON.stringify(entity.config[ENTITY.TEMPLATES]));
+  S6Context.debug("Cloned templates", JSON.stringify(templates));
+  S6Context.debug("Original templates", JSON.stringify(entity.config[ENTITY.TEMPLATES]));
 
   createTemplateCards(instance, templates, card, param);
   //createTemplateCards(instance, entity.config[ENTITY.TEMPLATES], card, param);
-  
+
 
   res = card.build();
   return res;
