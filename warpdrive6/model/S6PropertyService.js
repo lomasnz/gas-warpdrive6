@@ -456,7 +456,7 @@ class S6PropertyServiceBuilder {
       nameSpace,
       YES,
       EMPTY,
-      APPLY.TEXT, 
+      APPLY.TEXT,
       EMPTY,
       EMPTY,
       selectorDisplay);
@@ -619,7 +619,7 @@ class S6PropertyServiceBuilder {
       projectValues[1] = EMPTY;
       let x = 2;
       for (var d in projects) {
-        projectValues[x++] = projects[d][HARVEST_FIELDS.CODE];
+        projectValues[x++] = `${projects[d][HARVEST_FIELDS.CODE]} - ${projects[d][HARVEST_FIELDS.NAME]}`;
         projectValues[x++] = projects[d][HARVEST_FIELDS.CODE];
       }
 
@@ -646,7 +646,7 @@ class S6PropertyServiceBuilder {
       nameSpace,
       YES,
       EMPTY,
-      APPLY.TEXT, 
+      APPLY.TEXT,
       EMPTY,
       EMPTY,
       selectorDisplay);
@@ -663,7 +663,7 @@ class S6PropertyServiceBuilder {
       nameSpace,
       YES,
       sourcreField,
-      APPLY.TEXT, 
+      APPLY.TEXT,
       HARVEST_FIELDS.CODE,
       value,
       selectorDisplay);
