@@ -419,7 +419,7 @@ function sortListItem(unsortedFolders) {
         res = (a[index] > b[index]) ? -1 : 1;
       }
     }
-    S6Context.debugFn("sortFunction", "a[", a[index], "]b[", b[index], "]inxdex[", index, "]res[", res, "]");
+   //S6Context.debugFn("sortFunction", "a[", a[index], "]b[", b[index], "]inxdex[", index, "]res[", res, "]");
     return res;
   }
 
@@ -480,7 +480,9 @@ function createListManagedFolderCard(entity, param) {
   }
 
   try {
+    S6Context.time("DriveUI Get Root Folder:"+entity.config[ENTITY.ROOT_DIRECTORY_ID]);
     var folder = S6DriveApp.getFolderById(entity.config[ENTITY.ROOT_DIRECTORY_ID]);
+    S6Context.timeEnd("DriveUI Get Root Folder:"+entity.config[ENTITY.ROOT_DIRECTORY_ID]);
     if (folder == null) {
       S6Context.error("Can not find folder for ID:" + id);
     }
@@ -560,10 +562,11 @@ function createListManagedFolderCard(entity, param) {
       var keys = [];
       var item = {};
       for (var k = 0; k < folders.length; k++) {
-        S6Context.time("DriveUI process folder " + item[ITEM.name]);
         item[ITEM.name] = folders[k].getName();
+        
         try {
           if (!S6Utility.startsWith(item[ITEM.name], entity.config[ENTITY.IGNORE_LIST])) {
+            S6Context.time("DriveUI process folder " + item[ITEM.name]);
             var instance = S6EntityInstance.newFromFolder(folders[k], nameSpace);
             S6Context.debug("List Item Display", instance.data[INSTANCE.FIELDS], entity.config[ENTITY.LIST_DESCRIPTION]);
             item[ITEM.listItem] = S6Utility.replaceFieldInText(instance.data[INSTANCE.FIELDS], entity.config[ENTITY.LIST_DESCRIPTION]);
@@ -586,10 +589,10 @@ function createListManagedFolderCard(entity, param) {
             item[ITEM.url] = folders[k].getUrl();
             item[ITEM.id] = folders[k].getId();
 
-
             keys[k][2] = vars.groupByType != DATA_TYPE_DATE;
             keys[k][3] = vars.sortByType != DATA_TYPE_DATE;
             unsortedFolders.set(keys[k], item);
+            S6Context.timeEnd("DriveUI process folder " + item[ITEM.name]);
           }
         }
         catch (err) {
@@ -598,7 +601,6 @@ function createListManagedFolderCard(entity, param) {
         }
         item = {};
       }
-      S6Context.timeEnd("DriveUI process folder " + item[ITEM.name]);
       const sortedFolders = sortListItem(keys);
 
       let index = EMPTY;
@@ -607,6 +609,7 @@ function createListManagedFolderCard(entity, param) {
         if (sortedFolders[i]) {
           let next = unsortedFolders.get(sortedFolders[i]);
           if (next) {
+            S6Context.time("DriveUI add ListItem" + item[ITEM.name]);
             S6Context.debug("DriveUI NEXT " + item, " for ", sortedFolders[i], vars.sortByType);
             let name = next[ITEM.name];
             S6Context.debug("Next folder", next);
@@ -628,6 +631,7 @@ function createListManagedFolderCard(entity, param) {
               label.setTopLabel(Utilities.formatDate(new Date(sortedFolders[i][1]), Session.getTimeZone(), "d MMMM yyyy"));
             }
             section.addWidget(label);
+            S6Context.timeEnd("DriveUI add ListItem" + item[ITEM.name]);
           }
         }
       }
@@ -641,6 +645,7 @@ function createListManagedFolderCard(entity, param) {
   return res.build();
 }
 function _helpChooseIcon(entity, defaultIcon, name) {
+  S6Context.time(`Choose Icon for ${entity} and ${name}`);
   var res = defaultIcon;
   if (entity.config[ENTITY.LIST_DATATYPE] == DATA_TYPE_DOMAIN) {
     res = S6Utility.getFaviconDomainFetchURL(name);
@@ -657,6 +662,7 @@ function _helpChooseIcon(entity, defaultIcon, name) {
       }
     }
   }
+  S6Context.timeEnd(`Choose Icon for ${entity} and ${name}`);
   return res;
 }
 
