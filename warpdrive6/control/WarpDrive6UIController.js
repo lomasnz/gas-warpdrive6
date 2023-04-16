@@ -61,7 +61,7 @@ class WarpDrive6UIController {
   }
 
   static initUserOverides() {
-    S6Context.addUser("paul.armstrong@section6.nz", S6EventSettings.LogDebugOn, S6EventSettings.LogInfoOn, S6EventSettings.LogTraceOn);
+    S6Context.addUser("paul.armstrong@section6.nz", S6EventSettings.LogDebugOff, S6EventSettings.LogInfoOn, S6EventSettings.LogTraceOff);
     Object.freeze(S6EventUser);
   }
 
