@@ -41,6 +41,7 @@ class WarpDrive6UIController {
     // AI Processor
     S6Context.addEvent(actionAITextProcessor, bulildAITextProcessorView);
     S6Context.addEvent(actionDoAITextProcessor, bulildDoAITextProcessorView);
+    S6Context.addEvent(actionDoAITextProcessor4, bulildDoAITextProcessorView4);
     S6Context.addEvent(actionEventReloadInstruction, buildReloadInstructionView);
     S6Context.addEvent(actionEventReloadBackstory, buildReloadBackstortyView);
     S6Context.addEvent(actionEventReloadWritringStyle, buildReloadWritingStyleView);
@@ -200,6 +201,9 @@ function actionAITextProcessor(event) {
 }
 
 function actionDoAITextProcessor(event) {
+  return WarpDrive6UIController.execute(event, arguments.callee.name);
+}
+function actionDoAITextProcessor4(event) {
   return WarpDrive6UIController.execute(event, arguments.callee.name);
 }
 

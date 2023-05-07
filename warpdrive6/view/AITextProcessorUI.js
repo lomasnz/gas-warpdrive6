@@ -51,7 +51,7 @@ function bulildAITextProcessorView(param) {
 
   var title = DocumentApp.getActiveDocument().getName();
   console.log("call guessWritingType", title);
-  var wt = writingStyleName != EMPTY ? writingStyleName : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value == EMPTY? S6AITextService.guessWritingType(title, fields, service.writing) : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value;
+  var wt = writingStyleName != EMPTY ? writingStyleName : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value == EMPTY ? S6AITextService.guessWritingType(title, fields, service.writing) : fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value;
   console.log("wt guessWritingType", wt);
 
   fieldMap[AI_FIELDS.INSTRUCTION].value = prompt == EMPTY ? fieldMap[AI_FIELDS.INSTRUCTION].value : prompt;
@@ -172,7 +172,7 @@ function bulildAITextProcessorView(param) {
   res.addSection(advSection);
 
   var canBut = S6UIService.createCancelButton("BACK");
-  var confirmBut = S6UIService.createCreateButton("PROCESS", actionDoAITextProcessor.name, param.toJSON());
+  var confirmBut = S6UIService.createCreateButton("PROCESS", actionDoAITextProcessor4.name, param.toJSON());
   res.setFixedFooter(S6UIService.createFooter(confirmBut, canBut));
 
   return res.build();
@@ -291,9 +291,9 @@ function bulildDoAITextProcessorView(param) {
   input.instruction = fieldMap[AI_FIELDS.INSTRUCTION].value;
   var variables = S6AITextService.findUserVariables(input.instruction);
   console.log("start it");
-  if (variables.length > 0) {
-    return S6UIService.createNotification("You need to replace " + variables + " in your Instructions.");
-  }
+  // if (variables.length > 0) {
+  //   return S6UIService.createNotification("You need to replace " + variables + " in your Instructions.");
+  // }
 
   vars.color = fieldMap[AI_FIELDS.COLOR_TEXT].value == YES ? aiService.properties[AI_FIELDS.AI_PROPERTES.COLOUR] : EMPTY;
   vars.writing_type = fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value;
@@ -461,6 +461,160 @@ function bulildDoAITextProcessorView(param) {
   res.setFixedFooter(S6UIService.createFooter(confirmBut, canBut));
 
   return res.build();
+
+}
+
+function bulildDoAITextProcessorView4(param) {
+  let vars = {
+    edit_model: EMPTY,
+    text_model: EMPTY,
+    chat_model: EMPTY,
+    selectedText: NO,
+    selectedText: EMPTY,
+    formatOutput: false,
+    writing_type: EMPTY,
+    modifier: EMPTY,
+    letters_per_token: 4,
+    useBackstory: NO
+  }
+  let input = {
+    color: EMPTY,
+    answerReplacesText: NO,
+    instruction: EMPTY,
+    endPoint: EMPTY,
+    temperature: 1,
+    model: EMPTY,
+    text: EMPTY,
+    max_tokens: 500,
+    n: EMPTY,
+    suffix: EMPTY,
+    presence_penalty: 0.0,
+    frequency_penalty: 0.0,
+    top_p: EMPTY,
+    best_of: EMPTY,
+    outputFormatPrompt: EMPTY,
+    estimate_prompt_tokens: 0,
+    backstoryUser: EMPTY,
+    backstoryAssistance: EMPTY,
+    systemMessage: EMPTY
+  }
+  const aiService = S6AITextService.newS6AITextService();
+  input.systemMessage = aiService.properties[AI_FIELDS.AI_PROPERTES.SYSTEM_CONTENT];
+
+  console.log("aiService.properties", aiService.properties);
+
+  let pricePerK = 0.0;
+  let cost = 0.0;
+  var fields = param.getJSON(PARAM.FIELDS);
+  var notification = S6UIService.validateFields(fields);
+  if (notification) {
+    return notification;
+  }
+  var fieldMap = S6Utility.mapFields(fields);
+  input.instruction = fieldMap[AI_FIELDS.INSTRUCTION].value;
+  var variables = S6AITextService.findUserVariables(input.instruction);
+  console.log("start it");
+  // if (variables.length > 0) {
+  //   return S6UIService.createNotification("You need to replace " + variables + " in your Instructions.");
+  // }
+
+  input.color = fieldMap[AI_FIELDS.COLOR_TEXT].value == YES ? aiService.properties[AI_FIELDS.AI_PROPERTES.COLOUR] : EMPTY;
+  vars.writing_type = fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value;
+  vars.modifier = fieldMap[AI_FIELDS.DOCUMENT_WRTING_CREATATIVITY].value;
+  vars.useBackstory = fieldMap[AI_FIELDS.USE_BACKSTORY].value;
+
+  input.frequency_penalty = aiService.writing[vars.writing_type][vars.modifier][AI_WRITING_CONFIG.FREQUENCY_PENALTY];
+  input.presence_penalty = aiService.writing[vars.writing_type][vars.modifier][AI_WRITING_CONFIG.PRESENCE_PENALTY];
+  input.temperature = aiService.writing[vars.writing_type][vars.modifier][AI_WRITING_CONFIG.TEMPERATURE];
+  input.endPoint = fieldMap[AI_FIELDS.ENDPOINT].value;
+  input.backstoryUser = vars.useBackstory == YES ? fieldMap[AI_FIELDS.BACKSTORY_USER].value : EMPTY;
+  input.backstoryAssistance
+    = S6Utility.trim(fieldMap[AI_FIELDS.BACKSTORY_USER].value) == EMPTY ? EMPTY : aiService.properties[AI_FIELDS.AI_PROPERTES.ASSISTANCE_CONTENT];
+
+
+  input.n = fieldMap[AI_FIELDS.N].value;
+  input.best_of = fieldMap[AI_FIELDS.BEST_OF].value;
+  vars.edit_model = fieldMap[AI_FIELDS.EDIT_MODEL].value;
+  vars.text_model = fieldMap[AI_FIELDS.TEXT_MODEL].value;
+  vars.chat_model = fieldMap[AI_FIELDS.CHAT_MODEL].value;
+  vars.selectedText = fieldMap[AI_FIELDS.SELECTED_TEXT].value;
+  input.answerReplacesText = fieldMap[AI_FIELDS.ANSWER_REPLACES_TEXT].value;
+  input.suffix = fieldMap[AI_FIELDS.SUFFIX].value;
+  input.top_p = fieldMap[AI_FIELDS.TOP_P].value;
+
+
+  console.log("aiService.properties", aiService.properties);
+
+  let models;
+  if (input.endPoint == OPEN_AI.TEXT_PROCESS_ENDPOINTS.COMPLETIONS) {
+    input.model = vars.text_model;
+    models = OPEN_AI_MODELS_COMPLETES;
+  }
+  else if (input.endPoint == OPEN_AI.TEXT_PROCESS_ENDPOINTS.CHAT) {
+    input.model = vars.chat_model;
+    models = OPEN_AI_MODELS_CHAT;
+  }
+  else {
+    input.model = vars.edit_model;
+    models = OPEN_AI_MODELS_EDITS
+  }
+
+  for (var m = 0; m < models.length; m++) {
+    console.log(models[m].PRICE_PER_1000_TOKENS);
+    if (models[m].MODEL_NAME == input.model) {
+      pricePerK = models[m].PRICE_PER_1000_TOKENS;
+      //vars.max_tokens = models[m].MAX_TOKEN;
+      break;
+    }
+  }
+  var aDoc = DocumentApp.getActiveDocument();
+  var doc = S6DocumentAdapater.create(aDoc.getId());
+
+  if (vars.selectedText != NO) {
+    input.text = doc.getSelectedText(true);
+    if (input.text == EMPTY && vars.selectedText == ALWAYS) {
+      return S6UIService.createNotification("Instructions NOT processed. You have to selected text in the document as input to the instruction. Or change the Selected Text option.");
+    }
+    _calculateInputTokens(input, aiService);
+  }
+  S6Context.debug("Vars", vars);
+  S6Context.debug("Input", input);
+
+  var template = HtmlService.createTemplateFromFile('warpdrive6/view/OpenAIDialog.html');
+  template.passedParam = JSON.stringify(input);
+  var htmlOutput = template.evaluate()
+    .setWidth(500)
+    .setHeight(200);
+
+  DocumentApp.getUi().showModelessDialog(htmlOutput, "WARP DRIVE6");
+
+}
+
+function processText(input) {
+  console.log("Run processText", input);
+  WarpDrive6UIController.initS6Event();
+  S6Utility.initAddOn();
+
+  var jinput = JSON.parse(input)
+
+  var response = OpenAIService.processText(jinput);
+
+  var aDoc = DocumentApp.getActiveDocument();
+  var doc = S6DocumentAdapater.create(aDoc.getId());
+
+  var output = response.output;
+  if (output) {
+    if (output.choices) {
+      if (output.choices.length == 1) {
+        doc.parseText2Document(output.choices[0].text, input.answerReplacesText == YES, input.color);
+      }
+    }
+  }
+  S6Context.info("Status code:", response.responseStatus.statusCode,
+    "Status name:", response.responseStatus.statusName,
+    "Error message:", response.responseStatus.errorMessage,
+    "Time to execute in ms:", response.responseStatus.time,
+    "Time to execute in seconds:", (response.responseStatus.time / 1000).toFixed(2));
 
 }
 /**

@@ -33,6 +33,11 @@
         "userSymbol": "LodashGS",
         "libraryId": "1SQ0PlSMwndIuOAgtVJdjxsuXueECtY9OGejVDS37ckSVbMll73EXf2PW",
         "version": "5"
+      },
+      {
+        "userSymbol": "OAuth2",
+        "version": "43",
+        "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF"
       }
     ]
   },
@@ -58,7 +63,12 @@
     "https://www.googleapis.com/auth/drive.activity.readonly",
     "https://www.googleapis.com/auth/admin.directory.user.readonly",
     "https://www.googleapis.com/auth/admin.directory.group.readonly",
-    "https://www.googleapis.com/auth/script.scriptapp"
+    "https://www.googleapis.com/auth/script.scriptapp",
+    "https://www.googleapis.com/auth/script.deployments",
+    "https://www.googleapis.com/auth/script.deployments.readonly",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/cloud-platform",
+    "https://www.googleapis.com/auth/cloud-platform.read-only"
   ],
   "urlFetchWhitelist": [
     "https://*.openai.com/",
@@ -81,7 +91,13 @@
     "https://www.abr.business.gov.au/",
     "https://connectonline.asic.gov.au/",
     "https://www.nzbn.govt.nz/",
-    "https://api.openai.com/"
+    "https://api.openai.com/",
+    "https://hcti.io/v1/image",
+    "https://oauth2.googleapis.com/token",
+    "https://script.googleapis.com/v1/projects",
+    "https://pubsub.googleapis.com/v1/projects/s6-g-tools/topics/",
+    "https://secretmanager.googleapis.com/v1/projects/s6-g-tools",
+    "https://secretmanager.googleapis.com/v1/projects/"
   ],
   "runtimeVersion": "V8",
   "addOns": {

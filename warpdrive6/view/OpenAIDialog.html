@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+     <script>
+      var myParam = <?= passedParam ?>;
+      
+      function callServerFunction() {
+        google.script.run.processText(myParam);
+    
+      }
+
+      window.addEventListener('load', callServerFunction);
+    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
+        padding: 16px;
+      }
+      
+      .title {
+        font-size: 24px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      
+      .content {
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+      
+      .button {
+        background-color: #61166d;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+      }
+      
+      .button:hover {
+        background-color: #185abc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="title"> </div>
+    <div class="content">Your request has been sent to the server for processing.<br>The document will be updated as soon as possible.</div>
+    <button class="button" onclick="google.script.host.close();">Close</button>
+  </body>
+</html>
