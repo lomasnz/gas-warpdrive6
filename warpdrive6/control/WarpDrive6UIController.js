@@ -40,7 +40,6 @@ class WarpDrive6UIController {
     S6Context.addEvent(actionEventOpenLink, buildOpenLinkView);
     // AI Processor
     S6Context.addEvent(actionAITextProcessor, bulildAITextProcessorView);
-    S6Context.addEvent(actionDoAITextProcessor, bulildDoAITextProcessorView);
     S6Context.addEvent(actionDoAITextProcessor4, bulildDoAITextProcessorView4);
     S6Context.addEvent(actionEventReloadInstruction, buildReloadInstructionView);
     S6Context.addEvent(actionEventReloadBackstory, buildReloadBackstortyView);
@@ -57,12 +56,14 @@ class WarpDrive6UIController {
     S6Context.addEvent(actionEventBoilerplateConfrimEvent, buildBoilerplateConfrimView);
     S6Context.addEvent(actionEventBoilerplateApply, buildBoilerplateApply);
 
+    S6Context.addEvent(actionEventDisplayGPT4Progress, displayGPT4ProgressView);
+
     Object.freeze(S6Event);
 
   }
 
   static initUserOverides() {
-    S6Context.addUser("paul.armstrong@section6.nz", S6EventSettings.LogDebugOff, S6EventSettings.LogInfoOn, S6EventSettings.LogTraceOff);
+    S6Context.addUser("paul.armstrong@section6.nz", S6EventSettings.LogDebugOn, S6EventSettings.LogInfoOn, S6EventSettings.LogTraceOff);
     Object.freeze(S6EventUser);
   }
 
@@ -200,9 +201,6 @@ function actionAITextProcessor(event) {
   return WarpDrive6UIController.execute(event, arguments.callee.name);
 }
 
-function actionDoAITextProcessor(event) {
-  return WarpDrive6UIController.execute(event, arguments.callee.name);
-}
 function actionDoAITextProcessor4(event) {
   return WarpDrive6UIController.execute(event, arguments.callee.name);
 }
@@ -216,6 +214,9 @@ function actionEventReloadBackstory(event) {
 }
 
 function actionEventReloadWritringStyle(event) {
+  return WarpDrive6UIController.execute(event, arguments.callee.name);
+}
+function actionEventDisplayGPT4Progress(event) {
   return WarpDrive6UIController.execute(event, arguments.callee.name);
 }
 
