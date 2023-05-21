@@ -370,7 +370,7 @@ function buildFileActionView(param) {
 
     param.setValue(PARAM.TASK_TYPE, TASK_AI);
     param.replaceJSON(PARAM.FIELDS, null);
-    contentSection.addWidget(S6UIService.createActionLabel("OpenAI [BETA]", `Work with this document using AI machine learning`, ICON_OPEN_AI_URL, actionAITextProcessor.name, param.toJSON()))
+    contentSection.addWidget(S6UIService.createActionLabel("OpenAI GPT", `Work with this document using OpenAI's ChatGPT, powered by it GPT large language models`, ICON_OPEN_AI_URL, actionAITextProcessor.name, param.toJSON()))
     contentSection.addWidget(S6UIService.createDivider());
   }
 
