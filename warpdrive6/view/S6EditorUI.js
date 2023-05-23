@@ -270,7 +270,7 @@ function buildEditorHomPageView(id = EMPTY, param) {
 
   S6Context.debug("id[", id, "]");
   if (!param) {
-    param = new Param(event);
+    param = new Param();
   }
   var res = S6UIService.createCard("Manage this file", "File information and actions", ICON_TUNE_URL, "HOME");
   //var id = param.getDocumentId();
