@@ -591,7 +591,7 @@ function displayGPT4ProgressView(param) {
   }
 
   section.addWidget(S6UIService.createParagraph(
-    `Your request to GPT-4 has been queued. Once complete, your document will be updated by replacing the following text:
+    `Your request to GPT-4 has been queued. <b>It shouldn't take to long</b>. Once complete, your document will be updated by replacing the following text:
 
 ${input.placeholder}`));
   section.addWidget(S6UIService.createDivider());

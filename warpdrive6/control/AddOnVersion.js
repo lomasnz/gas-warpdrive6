@@ -3,7 +3,7 @@ const ADD_ON_VERSION_FIELD = "version";
 const ADD_ON_NAME = "S6 TOOL BOX";
 const ADD_ON_METADATA_VERSION = "1.1";
 const ADD_ON_METADATA_VERSION_2 = "2.0";
-const ADD_ON_RELEASE = "2.7.0, 14 May 2023";
+const ADD_ON_RELEASE = "2.8.0, 11 May 2023";
 
 const META_DATA = {
   VALUE_FROM_FOLDER: "YES",
