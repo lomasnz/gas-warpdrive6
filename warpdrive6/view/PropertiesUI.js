@@ -260,7 +260,7 @@ function action_ApplyProperties(event) {
   var docId = param.getFirst("docId");
   var adapt = S6DocumentAdapater.create(docId);
   console.log(adapt);
-  var factory = PropertyApplyFactory.create(event, adapt);
+  var factory = PropertyApplyFactory.createFromEvent(event, adapt);
 
   var props = param.getJSON("property");
   console.log("props", props);

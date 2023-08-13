@@ -157,9 +157,21 @@ function bulildAITextProcessorView(param) {
   tempSection.setNumUncollapsibleWidgets(1);
   tempSection.addWidget(S6UIService.createIconLabel("<b>Instruction Templates</b>", "Expend ▼ to select a template", ICON_QUOTE_URL));
 
-
+  var title = EMPTY;
+  var first = true;
   for (let t = 0; t < service.templates.length; t++) {
     const template = service.templates[t];
+    if (title != template[AI_FIELDS.AI_TEMPLATE.TITLE]) {
+      title = template[AI_FIELDS.AI_TEMPLATE.TITLE];
+      if (first) {
+        tempSection.addWidget(S6UIService.createDivider());
+        first = false;
+      }
+      // section.setCollapsible(true);
+      // section.setNumUncollapsibleWidgets(1);
+      tempSection.addWidget(S6UIService.createLabel(title));
+
+    }
     param.replaceValue(PROMPT, template[AI_FIELDS.AI_TEMPLATE.PROMPT]);
     param.replaceValue(PROMPT_NAME, template[AI_FIELDS.AI_TEMPLATE.NAME]);
     param.replaceValue(PROMPT_NAME_SELECTEDTEXT, template[AI_FIELDS.AI_TEMPLATE.SELECTED_TEXT]);
@@ -274,7 +286,7 @@ function _tokensLen(text = EMPTY) {
 }
 
 function _calculateInputTokens(input, aiService) {
-  var max = OpenAIService.getTokensFormModel(input.model);
+  var max = OpenAIService.getModelSize(input.model);
   const letters_per_token = parseFloat(aiService.properties[AI_FIELDS.AI_PROPERTES.LETTERS_PER_TOKEN]);
   const min_response_size = parseInt(aiService.properties[AI_FIELDS.AI_PROPERTES.MIN_RESPONSE_SIZE]);
 
@@ -288,11 +300,10 @@ function _calculateInputTokens(input, aiService) {
   factor = (!factor ? 1 : factor);
   let calcResponseSize = 0;
 
-  calcResponseSize = Math.max(estimate_prompt_tokens * parseFloat(factor), min_response_size);
-  input.max_tokens = parseInt(estimate_prompt_tokens + calcResponseSize);
+  calcResponseSize = Math.min(estimate_prompt_tokens * parseFloat(factor), min_response_size);
+  input.max_tokens = calcResponseSize;
 
-  S6Context.debug("c_calculateInputTokens", max, count, letters_per_token, calcResponseSize);
-  console.log("calcResponseSize", calcResponseSize);
+  S6Context.debug("c_calculateInputTokens", max, count, letters_per_token, calcResponseSize, input.max_tokens);
   return { max, calcResponseSize };
 
 }
@@ -314,117 +325,118 @@ function bulildGPT3ResponseView(input, vars, res) {
     if (input.text == EMPTY && vars.selectedText == ALWAYS) {
       return S6UIService.createNotification("Instructions NOT processed. You have to selected text in the document as input to the instruction. Or change the Selected Text option.");
     }
-    var { max, calcResponseSize } = _calculateInputTokens(input, aiService);
-
-    if (input.max_tokens < 0) {
-      var factor = parseFloat(aiService.properties["LETTERS_PER_TOKEN"]);
-      return S6UIService.createNotification(`The text you've selected is too long for this model to process. The model can handle approximately ${max / factor} words or ${parseInt(max * factor)} characters. Please reduce the size of your input text and try again.`)
-    }
-    var response = OpenAIService.processText(input);
-
-    var sectionHeader = S6UIService.createSection();
-    sectionHeader.addWidget(S6UIService.createParagraph(MODEL_SIZE_MESSAGE[input.responseSize].msg));
-    sectionHeader.addWidget(S6UIService.createParagraph(`The response will be no more than aproximtaley <b>${parseInt(calcResponseSize)}</b> words.`));
-    sectionHeader.addWidget(S6UIService.createDivider());
-
-    var tecSection = S6UIService.createSection("<b>Technical Information</b>");
-    var sectionHTTP = tecSection;
-    if (response.responseStatus.statusCode >= 200 & response.responseStatus.statusCode < 300) {
-      var lab = S6UIService.createIconLabel("<b>Success.</b>");
-      lab.setStartIcon(makeIcon(ICON_TASKS_URL));
-      sectionHeader.addWidget(lab);
-      sectionHeader.addWidget(S6UIService.createIconLabel(`<b>Time to execute:</b> ${(response.responseStatus.time / 1000).toFixed(2)} seconds`));
-    }
-    else {
-      sectionHTTP = sectionHeader;
-      var lab = S6UIService.createIconLabel(`<font color="${CANCEL_COLOUR}">Process Failed.</font>`);
-      lab.setStartIcon(makeIcon(ICON_WARNING_URL));
-      sectionHeader.addWidget(lab);
-    }
-    tecSection.setCollapsible(true);
-    tecSection.setNumUncollapsibleWidgets(1);
-
-    S6Context.debug("Input", input);
-    input["Selected text count"] = `${input.text.length} characters`;
-
-    tecSection.addWidget(S6UIService.createLablesFromJson(input, "User Input"));
-    tecSection.addWidget(S6UIService.createDivider());
-    if (response.payload) {
-      S6Context.debug("Payload", response.payload);
-      tecSection.addWidget(S6UIService.createLablesFromJson(S6Utility.flattenJSON(response.payload), "OpenAI GPT Payload"));
-      tecSection.addWidget(S6UIService.createDivider());
-    }
-
-    var output = response.output;
-    if (output) {
-      if (output.choices) {
-        if (output.choices.length == 1) {
-          doc.parseText2Document(output.choices[0].text, vars.answerReplacesText == YES, input.color);
-        }
-        else {
-          // go backwards through the choices beceduase the document inserts them in the reverse order
-          for (let c = output.choices.length - 1; c > -1; c--) {
-            console.log("Best of choices:", c, output.choices[c])
-            doc.update(`\n[OpenAI, n=${c + 1}]` + _addDoubleLineFeed(output.choices[c].text), vars.answerReplacesText == YES, input.color);
-            S6Context.trace(`[OpenAI, n=${c}]`, output.choices[c].text);
-          }
-        }
-        let finish_reason = output.choices[0].finish_reason;
-        if (finish_reason == "length") {
-          explain_finish_reason = "not enough tokens."
-        }
-        else if (finish_reason == "stop") {
-          explain_finish_reason = "the model reached a natural stopping point.";
-        }
-        else {
-          explain_finish_reason = "unknown";
-        }
-        var outputToUI = S6Utility.flattenJSON(output);
-
-        sectionHTTP.addWidget(S6UIService.createLablesFromJson(outputToUI, "OpenAI GPT Output"));
-        sectionHTTP.addWidget(S6UIService.createDivider());
-        if (output.usage) {
-          var tokensPerK = parseFloat(output.usage.total_tokens) / 1000.0;
-          cost = (pricePerK * tokensPerK).toFixed(4);
-          sectionHeader.addWidget(S6UIService.createLablesFromJson({
-            "Used tokens": `${output.usage.total_tokens}`,
-            "Cost per 1000 tokens": `${pricePerK} ¢`,
-            "Cost USD": `${cost} ¢`
-          }, "Cost"));
-        }
-
-      }
-      else if (output.error) {
-        var labOutput = S6UIService.createLablesFromJson({
-          "Message": output.error.message,
-          "Type": output.error.type,
-          "Param": output.error.param,
-          "Code": output.error.code,
-        }, "Error Output");
-        sectionHeader.addWidget(labOutput);
-      }
-    }
-    var labHttps = S6UIService.createLablesFromJson({
-      "Status code": response.responseStatus.statusCode,
-      "Status name": response.responseStatus.statusName,
-      "Error message": response.responseStatus.errorMessage,
-      "Time to execute in ms": response.responseStatus.time,
-      "Time to execute in seconds": (response.responseStatus.time / 1000).toFixed(2),
-    }, "HTTPS Response");
-    sectionHTTP.addWidget(labHttps);
-    tecSection.addWidget(S6UIService.createDivider());
-    tecSection.addWidget(S6UIService.createLablesFromJson(S6Utility.flattenJSON(response.headers), "HTTP Response Headers"));
-
-    var canBut = S6UIService.createCancelButton(" ");
-    var confirmBut = S6UIService.createCreateButton("BACK", S6UIService_actionGoBack.name);
-
-    res.addSection(sectionHeader);
-    res.addSection(tecSection);
-    res.setFixedFooter(S6UIService.createFooter(confirmBut, canBut));
   }
-  return res;
+  var { max, calcResponseSize } = aiService.calculateInputTokens(input);
 
+  if (input.max_tokens > max) {
+    var factor = parseFloat(aiService.properties["LETTERS_PER_TOKEN"]);
+    return S6UIService.createNotification(`The text you've selected is too long for this model to process. The model can handle approximately ${max / factor} words or ${parseInt(max * factor)} characters. Please either reduce the size of your input text and try again. Or use GPT4 which is larger and will process text in chunks.`)
+  }
+  var response = OpenAIService.processText(input);
+
+  var sectionHeader = S6UIService.createSection();
+  sectionHeader.addWidget(S6UIService.createParagraph(MODEL_SIZE_MESSAGE[input.responseSize].msg));
+  sectionHeader.addWidget(S6UIService.createParagraph(`The response will be no more than aproximtaley <b>${parseInt(calcResponseSize)}</b> words.`));
+  sectionHeader.addWidget(S6UIService.createDivider());
+
+  var tecSection = S6UIService.createSection("<b>Technical Information</b>");
+  var sectionHTTP = tecSection;
+  if (response.responseStatus.statusCode >= 200 & response.responseStatus.statusCode < 300) {
+    var lab = S6UIService.createIconLabel("<b>Success.</b>");
+    lab.setStartIcon(makeIcon(ICON_TASKS_URL));
+    sectionHeader.addWidget(lab);
+    sectionHeader.addWidget(S6UIService.createIconLabel(`<b>Time to execute:</b> ${(response.responseStatus.time / 1000).toFixed(2)} seconds`));
+  }
+  else {
+    sectionHTTP = sectionHeader;
+    var lab = S6UIService.createIconLabel(`<font color="${CANCEL_COLOUR}">Process Failed.</font>`);
+    lab.setStartIcon(makeIcon(ICON_WARNING_URL));
+    sectionHeader.addWidget(lab);
+  }
+  tecSection.setCollapsible(true);
+  tecSection.setNumUncollapsibleWidgets(1);
+
+  S6Context.debug("Input", input);
+  input["Selected text count"] = `${input.text.length} characters`;
+
+  tecSection.addWidget(S6UIService.createLablesFromJson(input, "User Input"));
+  tecSection.addWidget(S6UIService.createDivider());
+  if (response.payload) {
+    S6Context.debug("Payload", response.payload);
+    tecSection.addWidget(S6UIService.createLablesFromJson(S6Utility.flattenJSON(response.payload), "OpenAI GPT Payload"));
+    tecSection.addWidget(S6UIService.createDivider());
+  }
+
+  var output = response.output;
+  if (output) {
+    if (output.choices) {
+      if (output.choices.length == 1) {
+        doc.parseText2Document(output.choices[0].text, vars.answerReplacesText == YES, input.color);
+      }
+      else {
+        // go backwards through the choices beceduase the document inserts them in the reverse order
+        for (let c = output.choices.length - 1; c > -1; c--) {
+          console.log("Best of choices:", c, output.choices[c])
+          doc.update(`\n[OpenAI, n=${c + 1}]` + _addDoubleLineFeed(output.choices[c].text), vars.answerReplacesText == YES, input.color);
+          S6Context.trace(`[OpenAI, n=${c}]`, output.choices[c].text);
+        }
+      }
+      let finish_reason = output.choices[0].finish_reason;
+      if (finish_reason == "length") {
+        explain_finish_reason = "not enough tokens."
+      }
+      else if (finish_reason == "stop") {
+        explain_finish_reason = "the model reached a natural stopping point.";
+      }
+      else {
+        explain_finish_reason = "unknown";
+      }
+      var outputToUI = S6Utility.flattenJSON(output);
+
+      sectionHTTP.addWidget(S6UIService.createLablesFromJson(outputToUI, "OpenAI GPT Output"));
+      sectionHTTP.addWidget(S6UIService.createDivider());
+      if (output.usage) {
+        var tokensPerK = parseFloat(output.usage.total_tokens) / 1000.0;
+        cost = (pricePerK * tokensPerK).toFixed(4);
+        sectionHeader.addWidget(S6UIService.createLablesFromJson({
+          "Used tokens": `${output.usage.total_tokens}`,
+          "Cost per 1000 tokens": `${pricePerK} ¢`,
+          "Cost USD": `${cost} ¢`
+        }, "Cost"));
+      }
+
+    }
+    else if (output.error) {
+      var labOutput = S6UIService.createLablesFromJson({
+        "Message": output.error.message,
+        "Type": output.error.type,
+        "Param": output.error.param,
+        "Code": output.error.code,
+      }, "Error Output");
+      sectionHeader.addWidget(labOutput);
+    }
+  }
+  var labHttps = S6UIService.createLablesFromJson({
+    "Status code": response.responseStatus.statusCode,
+    "Status name": response.responseStatus.statusName,
+    "Error message": response.responseStatus.errorMessage,
+    "Time to execute in ms": response.responseStatus.time,
+    "Time to execute in seconds": (response.responseStatus.time / 1000).toFixed(2),
+  }, "HTTPS Response");
+  sectionHTTP.addWidget(labHttps);
+  tecSection.addWidget(S6UIService.createDivider());
+  tecSection.addWidget(S6UIService.createLablesFromJson(S6Utility.flattenJSON(response.headers), "HTTP Response Headers"));
+
+  var canBut = S6UIService.createCancelButton(" ");
+  var confirmBut = S6UIService.createCreateButton("BACK", S6UIService_actionGoBack.name);
+
+  res.addSection(sectionHeader);
+  res.addSection(tecSection);
+  res.setFixedFooter(S6UIService.createFooter(confirmBut, canBut));
+  return res;
 }
+
+
 
 function bulildDoAITextProcessorView4(param) {
   var res = S6UIService.createCard("ChatGPT", "Process result", ICON_OPEN_AI_URL);
@@ -444,12 +456,17 @@ function bulildDoAITextProcessorView4(param) {
     responseSize: 1,
     color: EMPTY,
     answerReplacesText: NO,
-    instruction: EMPTY,
-    endPoint: EMPTY,
+    instruction: EMPTY, // instruction for {straight} through processing strategy 
+    instruction1: EMPTY, // initial instruction for {rewrite,summary,analysis} strategy 
+    instruction2: EMPTY, // followup instruction for {summary,analysis} strategy  
+    instruction3: EMPTY, // final instruction for {summary,analysis} strategy 
+    promptType: PROMPT_TYPE.ONESHOT,
+    endPoint: "chat/completions",
     temperature: 1,
     model: EMPTY,
     text: EMPTY,
     max_tokens: 500,
+    modelSize: 4096,
     n: EMPTY,
     suffix: EMPTY,
     presence_penalty: 0.0,
@@ -458,8 +475,8 @@ function bulildDoAITextProcessorView4(param) {
     best_of: EMPTY,
     outputFormatPrompt: EMPTY,
     estimate_prompt_tokens: 0,
-    backstoryUser: EMPTY,
-    backstoryAssistance: EMPTY,
+    backstoryUser: EMPTY, // additional text for message[0].content for chat/completions end point 
+    backstoryAssistance: EMPTY, // additional role for message[0].role for chat/completions end point 
     systemMessage: EMPTY,
     documentId: EMPTY,
     placeholder: `+ ${Utilities.formatDate(new Date(), param.getTimeZone(), "dd-M-yyyy hh:mm:ss")}`
@@ -484,7 +501,8 @@ function bulildDoAITextProcessorView4(param) {
 
   var modelAndEndpoint = (fieldMap[AI_FIELDS.MODEL].value).split("#");
   input.model = modelAndEndpoint[0];
-  input.endPoint = modelAndEndpoint[1]
+  input.endPoint = modelAndEndpoint[1];
+  input.modelSize = OpenAIService.getModelSize(input.model);
 
   input.color = fieldMap[AI_FIELDS.COLOR_TEXT].value == YES ? aiService.properties[AI_FIELDS.AI_PROPERTES.COLOUR] : EMPTY;
   vars.writing_type = fieldMap[AI_FIELDS.DOCUMENT_WRTING_TYPE].value;
@@ -537,40 +555,68 @@ function bulildDoAITextProcessorView4(param) {
   var aDoc = DocumentApp.getActiveDocument();
   input.documentId = aDoc.getId();
   var doc = S6DocumentAdapater.create(aDoc.getId());
-
   if (vars.selectedText != NO) {
     input.text = doc.getSelectedText(true);
     if (input.text == EMPTY && vars.selectedText == ALWAYS) {
       return S6UIService.createNotification("Instructions NOT processed. You have to selected text in the document as input to the instruction. Or change the Selected Text option.");
     }
-    var { max, calcResponseSize } = _calculateInputTokens(input, aiService);
-    if (input.max_tokens < 0) {
+  }
+  var { max, desiredResponseSize } = aiService.calculateInputTokens(input);
+  if (input.model === "gpt-3.5-turbo-0301") {
+    if (input.max_tokens > max) {
       var factor = parseFloat(aiService.properties["LETTERS_PER_TOKEN"]);
       return S6UIService.createNotification(`The text you've selected is too long for this model to process. The model can handle approximately ${max / factor} words or ${parseInt(max * factor)} characters. Please reduce the size of your input text and try again.`)
     }
-  }
-  S6Context.debug("Vars", vars);
-  S6Context.debug("Input", input);
-
-  if (input.model === "gpt-3.5-turbo-0301") {
     res = S6UIService.createCard("OpenAI GPT", "Process result", ICON_OPEN_AI_URL);
     res = bulildGPT3ResponseView(input, vars, res);
     // return what would have been returned by bulildDoAITextProcessorView()
     res = res.build();
   }
-  else if (input.model === "gpt-4") {
-    doc.parseText2Document(input.placeholder, false, input.color);
-    //doc.insert(input.placeholder, input.color, EMPTY, false);
-    S6Hyperdrive.engage(processGPT4.name, input);
-    input.calcResponseSize = calcResponseSize;
-    param.setValue("input", JSON.stringify(input));
-    res = displayGPT4ProgressView(param)
+  else if (input.model === "gpt-4" || input.model === "gpt-4-32k") {
+    if (input.max_tokens > max) {
+      doc.parseText2Document(input.placeholder, false, input.color);
+      res = chunkGPT4ProgressView(input, aiService, fieldMap, param, fields);
+    }
+    else {
+      doc.parseText2Document(input.placeholder, false, input.color);
+      input.calcResponseSize = desiredResponseSize;
+      param.replaceJSON("input", input);
+      res = displayGPT4ProgressView(param);
+    }
   }
   else {
     S6Context.warn(`Unknown model ${input.model}`);
   }
   return res;
 }
+
+function chunkGPT4ProgressView(input, aiService, fieldMap, param, fields) {
+  var res = S6UIService.createCard("ChatGPT", "Chunk request", ICON_OPEN_AI_URL);
+  var section = S6UIService.createSection();
+  var { type, instruction1, instruction2, instruction3 } = aiService.redefineInstrutions(input.instruction);
+  var lookup = `AI-${type}`;
+  input.promptType = type;
+  S6UIService.createInfoSection(lookup, section);
+  fieldMap[AI_FIELDS.INSTRUCTION1].value = instruction1;
+  fieldMap[AI_FIELDS.INSTRUCTION2].value = instruction2;
+  fieldMap[AI_FIELDS.INSTRUCTION3].value = instruction3;
+  console.log(fieldMap[AI_FIELDS.INSTRUCTION2]);
+  section.addWidget(S6UIService.createInputFromField(fieldMap[AI_FIELDS.INSTRUCTION1]));
+  section.addWidget(S6UIService.createInputFromField(fieldMap[AI_FIELDS.INSTRUCTION2]));
+  if (type == PROMPT_TYPE.ANALYSE) {
+    section.addWidget(S6UIService.createInputFromField(fieldMap[AI_FIELDS.INSTRUCTION3]));
+  }
+  // param.replaceJSON(PARAM.FIELDS.)
+
+  res.addSection(section);
+  var canBut = S6UIService.createCancelButton("BACK");
+  param.replaceJSON("input", input);
+  param.replaceJSON(PARAM.FIELDS, fields);
+  var confirmBut = S6UIService.createCreateButton("PROCESS", actionEventDisplayGPT4Progress.name, param.toJSON());
+  res.setFixedFooter(S6UIService.createFooter(confirmBut, canBut));
+  return res.build();
+}
+
 
 function _displayGPT4ProgressStatus(event) {
   const param = new Param(event);
@@ -580,12 +626,24 @@ function _displayGPT4ProgressStatus(event) {
 
 function displayGPT4ProgressView(param) {
   var res;
+  var input = param.getJSON("input")
+  var fields = param.getJSON(PARAM.FIELDS);
+  var fieldMap = S6Utility.mapFields(fields);
+
+  console.log("check input stringify", JSON.stringify(input.text));
+  input.instruction1 = fieldMap[AI_FIELDS.INSTRUCTION1].value;
+  input.instruction2 = fieldMap[AI_FIELDS.INSTRUCTION2].value;
+  input.instruction3 = fieldMap[AI_FIELDS.INSTRUCTION3].value;
+
+  S6Hyperdrive.engage(processGPT4.name, input);
   var card = S6UIService.createCard("OpenAI GPT", "Process result", ICON_OPEN_AI_URL);
   var section = S6UIService.createSection();
-  const input = JSON.parse(param.getValue("input"));
+
   var status = param.getValue("status");
   if (status != YES) {
-    section.addWidget(S6UIService.createParagraph(MODEL_SIZE_MESSAGE[input.responseSize].msg));
+    if (input.responseSize && input.responseSize > 0) {
+      section.addWidget(S6UIService.createParagraph(MODEL_SIZE_MESSAGE[input.responseSize].msg));
+    }
     section.addWidget(S6UIService.createParagraph(`The response will be no more than aproximtaley <b>${parseInt(input.calcResponseSize)}</b> words.`));
     section.addWidget(S6UIService.createDivider());
   }
@@ -606,7 +664,7 @@ ${input.placeholder}`));
   else {
   }
   param.setValue("status", YES);
-  section.addWidget(S6UIService.createCreateButton("Status", "actionEventDisplayGPT4Progress", param.toJSON()));
+  section.addWidget(S6UIService.createCreateButton("Status", actionEventDisplayGPT4Progress.name, param.toJSON()));
   section.addWidget(S6UIService.createParagraph(_getGpt4Status(input.placeholder)));
   card.addSection(section);
   card.setFixedFooter(S6UIService.createFooter(S6UIService.createCreateButton("BACK"), S6UIService.createCancelButton(" ")));
@@ -624,50 +682,50 @@ ${input.placeholder}`));
 
 function _setGpt4Status(placeholder, status, suffix = EMPTY) {
   S6Context.info("Set GPT4 Processing Status:", status);
-  S6Cache.userCachePutString(GPT4_STATUS.KEY_PREFIX + placeholder, GPT4_STATUS.STATUS[status] + suffix);
+  S6Cache.userCachePutString(GPT4_STATUS.KEY_PREFIX + placeholder, `${GPT4_STATUS.STATUS[status]} ${suffix}`);
 }
 function _getGpt4Status(placeholder) {
   var res = S6Cache.userCacheGetString(GPT4_STATUS.KEY_PREFIX + placeholder);
   return !res || res == EMPTY ? " " : res;
 }
+
 function processGPT4(input) {
+  console.log(input.placeholder);
   _setGpt4Status(input.placeholder, GPT4_STATUSES.QUEUED);
   console.log("Run processText", input);
-
-
   _setGpt4Status(input.placeholder, GPT4_STATUSES.PROCESSING);
-  var response = OpenAIService.processText(input);
-
+  var sucess = false;
   var aDoc = DocumentApp.openById(input.documentId);
   var doc = S6DocumentAdapater.create(aDoc.getId());
 
-  var output = response.output;
-  var sucess = false;
-  let usage = {};
-  if (output) {
-    if (output.choices) {
-      if (output.choices.length == 1) {
-        sucess = true;
-        doc.parseTextInPlace(input.placeholder, output.choices[0].text, input.color);
-        aDoc.saveAndClose();
-      }
-    }
-    usage = output.usage;
+  try {
+    var responseText = OpenAIService.processText(input, function (chunk, ofchunk) {
+      _setGpt4Status(input.placeholder, GPT4_STATUSES.PROCESSING, `${chunk} of ${ofchunk}`);
+    });
+    sucess = true;
   }
+  catch (e) {
+    S6Context.error(e, e.stack);
+    responseText = e.errorMsg;
+  }
+
+  doc.parseTextInPlace(input.placeholder, responseText, input.color);
+  aDoc.saveAndClose();
+
   if (sucess) {
     _setGpt4Status(input.placeholder, GPT4_STATUSES.SUCCESS);
   }
   else {
-    _setGpt4Status(input.placeholder, GPT4_STATUSES.ERROR, output.error);
+    _setGpt4Status(input.placeholder, GPT4_STATUSES.ERROR, responseText);
+    doc.parseTextInPlace(input.placeholder, `*Open AI Processing Error*\n${responseText}`, input.color);
   }
-  var results = { response: response, usage: usage };
   S6Cache.userCachePutJson(input.placeholder, results);
 
-  S6Context.info("Status code:", response.responseStatus.statusCode,
-    "Status name:", response.responseStatus.statusName,
-    "Error message:", response.responseStatus.errorMessage,
-    "Time to execute in ms:", response.responseStatus.time,
-    "Time to execute in seconds:", (response.responseStatus.time / 1000).toFixed(2));
+  S6Context.info("Status code:", responseText.responseStatus.statusCode,
+    "Status name:", responseText.responseStatus.statusName,
+    "Error message:", responseText.responseStatus.errorMessage,
+    "Time to execute in ms:", responseText.responseStatus.time,
+    "Time to execute in seconds:", (responseText.responseStatus.time / 1000).toFixed(2));
 
 }
 /**

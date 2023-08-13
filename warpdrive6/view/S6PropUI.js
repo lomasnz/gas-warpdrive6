@@ -21,7 +21,7 @@ function buildPropertiesApplyView(param) {
   res.addSection(secHelp);
 
   var secRefresh = S6UIService.createSection();
-  secRefresh.addWidget(S6UIService.createRefreshButton(param.toJSON()));
+  secRefresh.addWidget(S6UIService.createRefreshButton(param));
   res.addSection(secRefresh);
 
   var secInfo = S6UIService.createSection("Poperties Action");
@@ -97,7 +97,7 @@ There are four types of document properties:
     secInfo.addWidget(S6UIService.createDivider());
     secInfo.addWidget(text);
 
-    S6Context.debug("Number of automatic properties:", max, docPropsAuto, docPropsAuto.length);
+    S6Context.debug("Number of automatic properties:", max, docPropsAuto);
 
     if (max > 0) {
       docSec = S6UIService.createSection("Document Properties", ICON_EDIT_URL);
@@ -106,19 +106,24 @@ There are four types of document properties:
       for (item in docPropsAuto) {
         var apply = APPLY.TEXT;
         var type = PROPERTIES.TYPES.TEXT;
-        var hint = `{${docPropsAuto[item]}} from this document`;
-        if ((docPropsAuto[item]).startsWith("https://")) {
+        
+        var title = docPropsAuto[item].title;
+        var field = docPropsAuto[item].field;
+        var value = docPropsAuto[item].value;
+        var hint = `{${title}} from this document`;
+         S6Context.info("docPropsAuto[item]",docPropsAuto[item]);
+        if (value.startsWith("https://")) {
           type = PROPERTIES.TYPES.LINK;
           apply = APPLY.LINK;
           hint = `URL for {${docPropsAuto[item]}}`;
         }
-        else if (S6Utility.containsWord(docPropsAuto[item], "date")) {
+        else if (S6Utility.containsWord(value, "date")) {
           type = PROPERTIES.TYPES.DATE_PRINTABLE;
         }
-        else if (docPropsAuto[item].indexOf(",") > -1) {
-          type = `${PROPERTIES.TYPES.INPUT_LIST}[${docPropsAuto[item]}]`;
+        else if (value.indexOf(",") > -1) {
+          type = `${PROPERTIES.TYPES.INPUT_LIST}[${value}]`
         }
-        var propText = S6PropertyServiceBuilder.propertyFactory(docPropsAuto[item], type, docPropsAuto[item], hint, YES, NO, PROPERTIES.AUTOMATIC, EMPTY, EMPTY, YES, EMPTY, apply);
+        var propText = S6PropertyServiceBuilder.propertyFactory(field, type, title, hint, YES, NO, PROPERTIES.AUTOMATIC, EMPTY, EMPTY, YES, EMPTY, apply);
         paramProps[i++] = propText;
         param.replaceJSON(PARAM.FIELDS, [propText]);
 
@@ -174,7 +179,7 @@ There are four types of document properties:
   return res.build();
 }
 
-function _createPropertyComponent(taskType, section, prop, functionName, json, auto = false, addDiv = false, param, allProps) {
+function _createPropertyComponent(taskType = EMPTY, section, prop, functionName, json, auto = false, addDiv = false) {
   var res = false;
   var added = false;
   var dataType = S6UIService.canonicalType(prop[PROPERTIES.ATTR.TYPE]);
@@ -185,14 +190,14 @@ function _createPropertyComponent(taskType, section, prop, functionName, json, a
     // automatic document properties 
     if (dataType == PROPERTIES.TYPES.DATE_PRINTABLE) {
       section.addWidget(S6UIService.createPropertyDateInput(prop, functionName, json));
-      section.addWidget(S6UIService.createPropertyButton(prop, functionName, json));
     }
     else if (dataType == PROPERTIES.TYPES.INPUT_LIST) {
-      section.addWidget(S6UIService.createInputList(prop[PROPERTIES.ATTR.PROP_ID], prop[PROPERTIES.ATTR.PROP_ID], EMPTY, typeParams, EMPTY));
-      section.addWidget(S6UIService.createPropertyButton(prop, functionName, json));
+      section.addWidget(S6UIService.createInputList(prop[PROPERTIES.ATTR.PROP_ID], prop[PROPERTIES.ATTR.TITLE], EMPTY, typeParams, EMPTY));
     }
     else {
       section.addWidget(S6UIService.createPropertyInput(prop, functionName, json));
+    }
+    if (taskType != EMPTY) {
       section.addWidget(S6UIService.createPropertyButton(prop, functionName, json));
     }
     added = true;
@@ -207,49 +212,54 @@ function _createPropertyComponent(taskType, section, prop, functionName, json, a
         section.addWidget(S6UIService.createPropertySelector(prop));
         res = true;
       }
+      else if (taskType == EMPTY) {
+        section.addWidget(S6UIService.createPropertySelector(prop));
+      }
       added = true;
     }
-    else if (dataType == PROPERTIES.TYPES.SELECTED) {
-      section.addWidget(S6UIService.createPropertySelected(prop, functionName, json));
-      res = true;
-      added = true;
-    }
+    else if (taskType != EMPTY) {
+      if (dataType == PROPERTIES.TYPES.SELECTED) {
+        section.addWidget(S6UIService.createPropertySelected(prop, functionName, json));
+        res = true;
+        added = true;
+      }
 
-    if (taskType == TASK_APPLY_PROPERTIES && addDiv && !res) {
-      section.addWidget(S6UIService.createDivider());
-    }
+      if (taskType == TASK_APPLY_PROPERTIES && addDiv && !res) {
+        section.addWidget(S6UIService.createDivider());
+      }
 
-    if (!added) {
-      if (dataType == PROPERTIES.TYPES.ENTITY_LOGO || dataType == PROPERTIES.TYPES.IMAGE_LINK) {
-        var value = prop[PROPERTIES.ATTR.VALUE];
-        if (value != EMPTY) {
-          section.addWidget(S6UIService.createImage(value));
+      if (!added) {
+        if (dataType == PROPERTIES.TYPES.ENTITY_LOGO || dataType == PROPERTIES.TYPES.IMAGE_LINK) {
+          var value = prop[PROPERTIES.ATTR.VALUE];
+          if (value != EMPTY) {
+            section.addWidget(S6UIService.createImage(value));
+          }
+          section.addWidget(S6UIService.createPropertyButton(prop, functionName, json));
         }
-        section.addWidget(S6UIService.createPropertyButton(prop, functionName, json));
-      }
-      else if (dataType == PROPERTIES.TYPES.INFO) {
-        S6Context.debug("dataType:", dataType, prop[PROPERTIES.ATTR.TITLE]);
+        else if (dataType == PROPERTIES.TYPES.INFO) {
+          S6Context.debug("dataType:", dataType, prop[PROPERTIES.ATTR.TITLE]);
 
-        var text = S6UIService._createDecoratedText(prop[PROPERTIES.ATTR.TITLE]);
-        text.setStartIcon(makeIcon(ICON_INFO_URL));
-        section.addWidget(text);
-      }
-      else if (dataType == PROPERTIES.TYPES.NOT_FOUND) {
-        var text = S6UIService._createDecoratedText(prop[PROPERTIES.ATTR.TITLE]);
-        text.setStartIcon(makeIcon(ICON_WARNING_URL));
-        text.setTopLabel(prop[PROPERTIES.ATTR.PROP_NAME]);
-        section.addWidget(text);
-      }
-      else if (dataType == PROPERTIES.TYPES.PAIREDLIST) {
-        var list = S6UIService.typeParameters(prop[PROPERTIES.ATTR.TYPE]);
-        var text = `🔽 ${prop[PROPERTIES.ATTR.TITLE]}`;
-        var comp = S6UIService._createPairedListDropdown(text, EMPTY, list, "New Zealand");
-        comp.setFieldName(prop[PROPERTIES.ATTR.PROP_NAME]);
-        section.addWidget(comp);
-        section.addWidget(S6UIService.createPropertyButton(prop, functionName, json));
-      }
-      else {
-        section.addWidget(S6UIService.createPropertyLabel(prop, functionName, json));
+          var text = S6UIService._createDecoratedText(prop[PROPERTIES.ATTR.TITLE]);
+          text.setStartIcon(makeIcon(ICON_INFO_URL));
+          section.addWidget(text);
+        }
+        else if (dataType == PROPERTIES.TYPES.NOT_FOUND) {
+          var text = S6UIService._createDecoratedText(prop[PROPERTIES.ATTR.TITLE]);
+          text.setStartIcon(makeIcon(ICON_WARNING_URL));
+          text.setTopLabel(prop[PROPERTIES.ATTR.PROP_NAME]);
+          section.addWidget(text);
+        }
+        else if (dataType == PROPERTIES.TYPES.PAIREDLIST) {
+          var list = S6UIService.typeParameters(prop[PROPERTIES.ATTR.TYPE]);
+          var text = `🔽 ${prop[PROPERTIES.ATTR.TITLE]}`;
+          var comp = S6UIService._createPairedListDropdown(text, EMPTY, list, "New Zealand");
+          comp.setFieldName(prop[PROPERTIES.ATTR.PROP_NAME]);
+          section.addWidget(comp);
+          section.addWidget(S6UIService.createPropertyButton(prop, functionName, json));
+        }
+        else {
+          section.addWidget(S6UIService.createPropertyLabel(prop, functionName, json));
+        }
       }
     }
   }
@@ -262,7 +272,7 @@ function buildApplyPropertiesActionView(param) {
   var res;
   var docId = param.getDocumentId();
   var adapt = S6DocumentAdapater.create(docId);
-  var factory = PropertyApplyFactory.create(param.event, adapt);
+  var factory = PropertyApplyFactory.createFromEvent(param.event, adapt);
 
   var highlight = param.event.formInputs["highlight_property_background"];
   var color = null;

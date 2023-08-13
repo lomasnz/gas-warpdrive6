@@ -5,8 +5,8 @@ class WarpDrive6UIController {
   static initS6Event() {
     WarpDrive6UIController.initUserOverides();
     //
-    S6Context.addEvent(actionEventDefault, null, S6EventSettings.LogDebugOn, S6EventSettings.LogInfoOn)
-    
+    S6Context.addEvent(actionEventDefault, actionEventDefault, S6EventSettings.LogDebugOn, S6EventSettings.LogInfoOn)
+
     // events that are triggered by the ui
     S6Context.addEvent(onDriveHomePage, onDriveHomePageView);
     S6Context.addEvent(onDriveSelectItemHomePage, onDriveSelectItemHomePageView);
@@ -58,19 +58,21 @@ class WarpDrive6UIController {
 
     S6Context.addEvent(actionEventDisplayGPT4Progress, displayGPT4ProgressView);
 
-    Object.freeze(S6Event);
+    //Object.freeze(S6Event);
 
   }
 
   static initUserOverides() {
     S6Context.addUser("paul.armstrong@section6.nz", S6EventSettings.LogDebugOn, S6EventSettings.LogInfoOn, S6EventSettings.LogTraceOff);
-    Object.freeze(S6EventUser);
+    //Object.freeze(S6EventUser);
   }
 
-  
+
   static execute(event, functionName) {
     WarpDrive6UIController.initS6Event();
-    return S6Context.new(functionName).executeBuild(event);
+    console.log(functionName);
+    var context = S6Context.newFromName(functionName);
+    return context.executeBuild(event);
   }
 }
 
