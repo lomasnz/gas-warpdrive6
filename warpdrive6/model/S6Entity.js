@@ -42,7 +42,8 @@ const ENTITY = {
     IS_FOLDER: "isFolder",
     FIELDS: "fields",
     TEMPLATES: "templates",
-    HAS_FIELDS: "hasFields"
+    HAS_FIELDS: "hasFields",
+    USE_DOC_PROPERTIES : "useDocPropoerties"
   },
   FIELDS: "fields",
   FIELD_ATTR: {
@@ -314,7 +315,7 @@ class S6Entity {
     // Temmplates 
 
     if (res[ENTITY.TEMPLATES_SHEET] != EMPTY) {
-      var templateValues = S6Entity._sheetValues(spreadsheet, res[ENTITY.TEMPLATES_SHEET], "A:D");
+      var templateValues = S6Entity._sheetValues(spreadsheet, res[ENTITY.TEMPLATES_SHEET], "A:E");
       res[ENTITY.TEMPLATES] = S6Entity._templates(spreadsheet, templateValues, res[ENTITY.FIELDS], res[ENTITY.NAME_SPACE]);
     }
 
@@ -552,7 +553,7 @@ class S6Entity {
             var desc = S6Utility.trim(values[i][0]);
             var templateUrl = S6Utility.trim(values[i][2]);
             var fieldsSheet = S6Utility.trim(values[i][3]);
-
+            var useDocumentPropoerties = S6Utility.trim(values[i][4]);
             var templateId = S6Utility.makePseudoGuid(12);// Utilities.computeHmacSignature() S6Utility.getIdFromUrl(templateUrl);
             var fields;
             var hasFeilds = NO;
@@ -576,7 +577,8 @@ class S6Entity {
               [ENTITY.TEMPLATE_ATTR.IS_FOLDER]: templateUrl == EMPTY ? YES : NO,
               [ENTITY.TEMPLATE_ATTR.FIELDS]: fields,
               [ENTITY.TEMPLATE_ATTR.ID]: templateId,
-              [ENTITY.TEMPLATE_ATTR.HAS_FIELDS]: hasFeilds
+              [ENTITY.TEMPLATE_ATTR.HAS_FIELDS]: hasFeilds,
+              [ENTITY.TEMPLATE_ATTR.USE_DOC_PROPERTIES]: useDocumentPropoerties == EMPTY ? NO : YES,
             };
             S6Context.debug("Next template created",res[headingIndex][ENTITY.TEMPLATES][templateCount-1]);
             //}

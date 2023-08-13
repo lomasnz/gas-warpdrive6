@@ -13,6 +13,7 @@ const EditType =
   UPDATE: "UPDATE"
 };
 
+DISPLAY_IN_TEMPLATE = "displayInTemplate";
 
 //var _ = LodashGS.load();
 
@@ -107,7 +108,8 @@ function buidEditView(param) {
       vars.createButtonName = "CONFIRM";
       const template = param.getJSON(PARAM.TEMPLATE);
       vars.fields = template[ENTITY.TEMPLATE_ATTR.FIELDS];
-      param.addJSON(PARAM.FIELDS, vars.fields);
+      //param.deleteAll(PARAM.TEMPLATE);
+      // param.replaceJSON(PARAM.FIELDS, vars.fields);
       //param.setEntityInstanceId(param.getEntityInstanceId());
       isEditable = function (field) { return field[ENTITY.FIELD_ATTR.ROOT_FIELD] == NO };
       break;
@@ -121,7 +123,7 @@ function buidEditView(param) {
       vars.createButtonName = "CONFIRM";
       break;
   }
-  param.addJSON(PARAM.FIELDS, vars.fields);
+
   const sectionReadOnly = S6UIService.createSection("Non-updateable entity details:");
   const sectionEditable = S6UIService.createSection(vars.label);
   const sectionTemplate = S6UIService.createSection();
@@ -131,6 +133,7 @@ function buidEditView(param) {
 
   for (let i = 0; i < vars.fields.length; i++) {
     //S6Context.log("next field:", vars.fields[i]);
+    vars.fields[i][DISPLAY_IN_TEMPLATE] = YES;
     if (isEditable(vars.fields[i])) {
       if (vars.fields[i][ENTITY.FIELD_ATTR.MANDATORY] == YES) {
         anyMandatory = true;
@@ -154,17 +157,34 @@ function buidEditView(param) {
     }
   }
 
-  if (anyMandatory) {
-    sectionEditable.addWidget(S6UIService.createInfoLabel("* Required fields."));
-  }
-
-  const createBut = S6UIService.createCreateButton(vars.createButtonName, vars.functionName, param.toJSON());
-  const cancelBut = S6UIService.createCancelButton("CANCEL");
-  const fotter = S6UIService.createFooter(createBut, cancelBut);
   var secHelp;
   if (vars.createType == EditType.TEMPLATE) {
     const t = entity.templateFromId(param.getValue(PARAM.TEMPLATE_ID));
     const templateUrl = S6MasterTemplate.lookupUrl(t[ENTITY.TEMPLATE_ATTR.URL], t[ENTITY.FIELDS]);
+
+    if (t[ENTITY.TEMPLATE_ATTR.USE_DOC_PROPERTIES] == YES) {
+      var { properties, autoProperties, selectorProperties } =
+        PropertyApplyFactory
+          .getEditableDocumentProperties(S6Utility.getIdFromUrl(templateUrl), param.getEntityInstanceId(), param.getNameSpace());
+
+      for (let a = 0; a < autoProperties.length; a++) {
+        _createPropertyComponent(EMPTY, sectionEditable, autoProperties[a], EMPTY, {}, true, false);
+        autoProperties[a][DISPLAY_IN_TEMPLATE] = YES;
+        vars.fields[vars.fields.length] = autoProperties[a];
+      }
+
+      for (let p = 0; p < selectorProperties.length; p++) {
+        _createPropertyComponent(EMPTY, sectionEditable, selectorProperties[p], EMPTY, {}, false, false);
+        selectorProperties[p][DISPLAY_IN_TEMPLATE] = YES;
+        vars.fields[vars.fields.length] = selectorProperties[p];
+      }
+      for (p1 in properties) {
+        properties[p1][DISPLAY_IN_TEMPLATE] = NO;
+        vars.fields[vars.fields.length] = properties[p1];
+      }
+    }
+
+
     if (t[ENTITY.TEMPLATE_ATTR.IS_FOLDER] == NO) {
       let file = S6DriveApp.getFileByUrl(templateUrl);
       if (file) {
@@ -190,9 +210,16 @@ function buidEditView(param) {
   else if (vars.createType == EditType.CREATE) {
     secHelp = S6UIService.createHelpSection("About createing entities", "", "Creating a new entity creates folders and files according to this entity's <b>Settings</b>. <br><br><b>This tool will never delete a file or folder.</b> If the folder for the entity already exists and you [re]create it, it will not replace it or cause a duplicate. This create function is idempotent, which means no matter how often it is executed, the results go unchanged. The only exception is if the function fails, leaving some of the template folders and files uncreated. Rerunning it will bring the entity up to date.<br><br>You can use this function to 'create' entities that already exist but were not created by this tool. Missing folders will be created, but other existing folders will not be affected and nothing will be deleted.");
   }
-
-  //S6Context.log("createCreateContentCardFromFields:end");
+  if (anyMandatory) {
+    sectionEditable.addWidget(S6UIService.createInfoLabel("* Required fields."));
+  }
+  console.log("vars.fields", vars.fields);
+  param.replaceJSON(PARAM.FIELDS, vars.fields);
   res = S6UIService.createCard(vars.cardTitle, vars.hint, vars.icon);
+  const createBut = S6UIService.createCreateButton(vars.createButtonName, vars.functionName, param.toJSON());
+  const cancelBut = S6UIService.createCancelButton("CANCEL");
+  const fotter = S6UIService.createFooter(createBut, cancelBut);
+
   res.setFixedFooter(fotter);
   if (vars.createType != EditType.CREATE) {
     res.addSection(sectionReadOnly);
@@ -419,7 +446,7 @@ function sortListItem(unsortedFolders) {
         res = (a[index] > b[index]) ? -1 : 1;
       }
     }
-   //S6Context.debugFn("sortFunction", "a[", a[index], "]b[", b[index], "]inxdex[", index, "]res[", res, "]");
+    //S6Context.debugFn("sortFunction", "a[", a[index], "]b[", b[index], "]inxdex[", index, "]res[", res, "]");
     return res;
   }
 
@@ -480,9 +507,9 @@ function createListManagedFolderCard(entity, param) {
   }
 
   try {
-    S6Context.time("DriveUI Get Root Folder:"+entity.config[ENTITY.ROOT_DIRECTORY_ID]);
+    S6Context.time("DriveUI Get Root Folder:" + entity.config[ENTITY.ROOT_DIRECTORY_ID]);
     var folder = S6DriveApp.getFolderById(entity.config[ENTITY.ROOT_DIRECTORY_ID]);
-    S6Context.timeEnd("DriveUI Get Root Folder:"+entity.config[ENTITY.ROOT_DIRECTORY_ID]);
+    S6Context.timeEnd("DriveUI Get Root Folder:" + entity.config[ENTITY.ROOT_DIRECTORY_ID]);
     if (folder == null) {
       S6Context.error("Can not find folder for ID:" + id);
     }
@@ -563,7 +590,7 @@ function createListManagedFolderCard(entity, param) {
       var item = {};
       for (var k = 0; k < folders.length; k++) {
         item[ITEM.name] = folders[k].getName();
-        
+
         try {
           if (!S6Utility.startsWith(item[ITEM.name], entity.config[ENTITY.IGNORE_LIST])) {
             S6Context.time("DriveUI process folder " + item[ITEM.name]);
@@ -683,7 +710,7 @@ function buildConfirmConfirmCreateDocWithFieldsFromTemplateView(param) {
 function buildConfirmCreateDocFromTemplateView(param) {
   var res;
   const template = param.getJSON(PARAM.TEMPLATE);
-  const fields = template[ENTITY.TEMPLATE_ATTR.FIELDS];
+  const fields = param.getJSON(PARAM.FIELDS);//;template[ENTITY.TEMPLATE_ATTR.FIELDS];
   var notification = S6UIService.validateFields(fields);
   if (notification != null) {
     return notification;
@@ -698,7 +725,7 @@ function buildConfirmCreateDocFromTemplateView(param) {
   template[ENTITY.TEMPLATE_ATTR.FILE_NAME] = fileName;
   param.replaceJSON(PARAM.TEMPLATE, template);
 
-  if (!fileName) {//} || !template[ENTITY.TEMPLATE.URL]) {
+  if (!fileName) {
     S6Context.error("fileName", fileName);
     return S6UIService.createNotification("There is a problem with the template you have chosen. Please check it is setup correctly");
   }
@@ -734,7 +761,9 @@ function buildConfirmCreateDocFromTemplateView(param) {
 
   for (let f = 0; f < fields.length; f++) {
     //S6Context.log("sectionFields", fields[f]);
-    sectionFields.addWidget(S6UIService.createFieldLabel(fields[f]));
+    if (fields[f][DISPLAY_IN_TEMPLATE] == YES) {
+      sectionFields.addWidget(S6UIService.createFieldLabel(fields[f]));
+    }
   }
 
   var createBut = S6UIService.createCreateButton("CREATE & OPEN", actionEventCreateDocFromTemplate.name, param.toJSON());
@@ -776,9 +805,12 @@ function buildCreateDocFromTemplateView(param) {
   driveFactory.createFoldersAndFiles(entity.config[ENTITY.ROOT_DIRECTORY_ID], foldersAndDocs);
 
   var newFile = EMPTY;
-  if (template[ENTITY.TEMPLATE_ATTR.IS_FOLDER == NO]) {
+  if (template[ENTITY.TEMPLATE_ATTR.IS_FOLDER] == NO) {
     var newFile = driveFactory.getFromRecord(foldersAndDocs[0][ENTITY.FOLDER.DOCS][0][ENTITY.FOLDER.DOC.FILE_NAME]);
     newFileUrl = newFile.getUrl();
+    if (template[ENTITY.TEMPLATE_ATTR.USE_DOC_PROPERTIES] == YES) {
+      PropertyApplyFactory.replaceFrom(newFile.getId(), param.getJSON(PARAM.FIELDS));
+    }
   }
   else {
     var newFolder = driveFactory.getLastRecorded();
@@ -834,7 +866,7 @@ function createTemplateCards(instance, temps, card, param) {
 
 
       var action = actionEventConfirmCreateDocFromTemplate.name;
-      if (inTemps[t][ENTITY.TEMPLATE_ATTR.HAS_FIELDS] == YES) {
+      if (inTemps[t][ENTITY.TEMPLATE_ATTR.HAS_FIELDS] == YES || inTemps[t][ENTITY.TEMPLATE_ATTR.USE_DOC_PROPERTIES] == YES) {
         S6Context.debug("Template has fields");
         param.replaceJSON(PARAM.TEMPLATE, inTemps[t]);
         param.replaceValue(PARAM.TEMPLATE_ID, inTemps[t][ENTITY.TEMPLATE_ATTR.ID]);
@@ -857,10 +889,38 @@ function createTemplateCards(instance, temps, card, param) {
   }
 }
 
+function cacheAllEntities(master) {
+  var version = S6Utility.getScriptProperty(CACHE_VERSION, true);
+  var localVersion = S6Cache.userCacheGetString(`${CACHE_VERSION}.local`);
+  if (version != localVersion) {
+    S6Cache.userCacheClear();
+    S6Cache.userCachePutString(`${CACHE_VERSION}.local`, version);
+    S6Context.info("Cache version changed, cache cleared.", version, localVersion);
+  }
+  S6Context.info("cacheAllEntities", master);
+  let count = 0;
+  for (let h = 0; h < master.configs.length; h++) {
+    for (let i = 0; i < master.configs[h][MASTER.ENTITIES].length; i++) {
+      S6Context.info("Cache entity", master.configs[h][MASTER.ENTITIES][i][MASTER.NAME_SPACE]);
+      S6Entity.newFromNameSpace(master.configs[h][MASTER.ENTITIES][i][MASTER.NAME_SPACE]);
+      count++;
+    }
+  }
+  S6Context.info("Cache " + count);
+  S6Context.info("Cache templates", S6MasterTemplate.new());
+  //S6Hyperdrive.engage(cacheAllEntities.name, master);
+  
+  return true;
+}
+
+
 function buildManageEntityCardsFromMaster(masterUrl) {
   var res = S6UIService.createCard("Manage SECTION6 Drive Entities", "Folders and Files", ICON_S6_URL);
   var master = S6Master.newMaster(masterUrl);
+  S6Hyperdrive.engage(cacheAllEntities.name, master);
+
   var sec;
+  console.log("master.configs", JSON.stringify(master.configs));
   for (let h = 0; h < master.configs.length; h++) {
     if (!sec) {
       sec = S6UIService.createSection();

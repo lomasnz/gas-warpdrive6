@@ -8,13 +8,6 @@ const TASK_APPLY_BOILERPLATE = "Apply Boilerplate";
 const TASK_AI = "OpenAI"
 
 
-const PROP_ACTION_INSERT_VALUE = "insert_value";
-const PROP_ACTION_INSERT_TITLE_VALUE = "insert_title_value";
-const PROP_ACTION_INSERT_TITLE_FIELD = "insert_title_field";
-const PROP_ACTION_INSERT_FIELD = "insert_field";
-const PROP_ACTION_REPLACE_TITLE_VALUE = "replace_title_value";
-const PROP_ACTION_REPLACE_VALUE = "replace_value";
-
 const TASK_VALUES = "TASKS"
 
 const FILE_LOCATION_TASKS = { [TASK_VALUES]: [TASK_COPY, TASK_MOVE, TASK_SHORT_CUT, TASK_BACKLINK] };
@@ -317,7 +310,7 @@ function buildEditorHomPageView(id = EMPTY, param) {
       S6Context.error(err);
       let sec = S6UIService.createSection();
       sec.addWidget(S6UIService.createIamgeLabel("Unsupported File", "There is a problem working with this file. Have you named it yet? That may help.", ICON_WARNING_URL));
-      sec.addWidget(S6UIService.createRefreshButton(param.toJSON(), false));
+      sec.addWidget(S6UIService.createRefreshButton(param, false));
       res.addSection(sec);
 
     }

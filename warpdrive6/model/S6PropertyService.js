@@ -15,8 +15,9 @@ const PROPERTIES = {
     FIELD_SOURCE: "fieldSource",
     VISIBLE: "visible",
     APPLY: "apply",
-    SELECTOR: DATA_TYPE_SLECTOR,
-    SELECTOR_VALUES: "selectorValues",
+    SELECTOR: DATA_TYPE_SELECTOR,
+    SELECTOR_MAP: "selectorMap",
+    SELECTOR_LIST : "selectorList",
     SELECTOR_DISPLAY: "selectorDisplay"
   },
   ORG: {
@@ -408,16 +409,18 @@ class S6PropertyServiceBuilder {
     var defValue = EMPTY;
     var propId = S6Utility.trim(sheetValue[PROPERTIES.COLUMNS.PROP_ID]);
     var selectorDisplay = "[Slected Deal]";
-    var dealValues = [];
+    var dealsList = [];
+    var dealsMap = []; 
 
     if (this.isForApplication()) {
       var domain = typeParameters[0];
       S6Context.debugFn("_propertyValuesForDeals:", typeParameters);
       domain = S6Utility.replaceFieldInText(instance.data[INSTANCE.FIELDS], domain);
 
-      var deals = S6PipeDrive.getOpenDealsForOrgDomain(domain);
+      dealsMap = S6PipeDrive.getOpenDealsForOrgDomain(domain);
+      console.error("dealsMap",dealsMap);
 
-      deals[defValue] = {
+      dealsMap[defValue] = {
         [PIPDRIVE_ATTR.DEAL_ID]: EMPTY,
         [PIPDRIVE_ATTR.CONATCT_NAME]: EMPTY,
         [PIPDRIVE_ATTR.CONTACT_PHONE]: EMPTY,
@@ -425,25 +428,25 @@ class S6PropertyServiceBuilder {
         [PIPDRIVE_ATTR.DEAL_NAME]: EMPTY,
         [PIPDRIVE_ATTR.DEAL_RENEWAL_DATE]: EMPTY
       }
-      S6Context.debugFn("_propertyValuesForDeals: deals", deals, deals.length);
-      dealValues[0] = selectorDisplay;
-      dealValues[1] = EMPTY;
+      S6Context.debugFn("_propertyValuesForDeals: deals", dealsMap, dealsMap.length);
+      dealsList[0] = selectorDisplay;
+      dealsList[1] = EMPTY;
       let x = 2;
-      for (var d in deals) {
-        dealValues[x++] = deals[d][PIPDRIVE_ATTR.DEAL_NAME];
-        dealValues[x++] = deals[d][PIPDRIVE_ATTR.DEAL_ID] + EMPTY;
+      for (var d in dealsMap) {
+        dealsList[x++] = dealsMap[d][PIPDRIVE_ATTR.DEAL_NAME];
+        dealsList[x++] = dealsMap[d][PIPDRIVE_ATTR.DEAL_ID] + EMPTY;
       }
 
       if (x == 2) {
-        dealValues[0] = "[No Deals]";
-        dealValues[1] = EMPTY;
+        dealsList[0] = "[No Deals]";
+        dealsList[1] = EMPTY;
       }
-      var value = deals;
     }
 
-    S6Context.debugFn("_propertyValuesForDeals: dealValues", dealValues);
+    S6Context.debugFn("_propertyValuesForDeals: dealValues", dealsList);
     let r = 0;
-
+    var sourcreField = S6PropertyServiceBuilder.makePropoertyName(nameSpace, propId);
+     
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId,
       PROPERTIES.TYPES.SELECTOR,
@@ -452,16 +455,17 @@ class S6PropertyServiceBuilder {
       NO,
       NO,
       source,
-      dealValues,
+      EMPTY,
       nameSpace,
       YES,
-      EMPTY,
+      sourcreField,
       APPLY.TEXT,
-      EMPTY,
-      EMPTY,
-      selectorDisplay);
+      PIPDRIVE_ATTR.DEAL_NAME,
+      dealsMap,
+      selectorDisplay,
+      dealsList);
 
-    var sourcreField = res[0][PROPERTIES.ATTR.PROP_NAME];
+    //var sourcreField = res[0][PROPERTIES.ATTR.PROP_NAME];
 
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".name",
@@ -477,7 +481,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       PIPDRIVE_ATTR.DEAL_NAME,
-      value,
+      dealsMap,
       selectorDisplay);
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".id",
@@ -493,7 +497,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       PIPDRIVE_ATTR.DEAL_ID,
-      value,
+      dealsMap,
       selectorDisplay);
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".section6.id",
@@ -509,7 +513,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       PIPDRIVE_ATTR.SECTION6_DEAL_ID,
-      value,
+      dealsMap,
       selectorDisplay);
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".section6.id.link",
@@ -525,7 +529,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.LINK,
       PIPDRIVE_ATTR.SECTION6_LINK_DEAL_ID,
-      value,
+      dealsMap,
       selectorDisplay);
 
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
@@ -542,7 +546,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       PIPDRIVE_ATTR.CONATCT_NAME,
-      value,
+      dealsMap,
       selectorDisplay);
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".contact.phone",
@@ -558,7 +562,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       PIPDRIVE_ATTR.CONTACT_PHONE,
-      value,
+      dealsMap,
       selectorDisplay);
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".renewal.date",
@@ -574,7 +578,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       PIPDRIVE_ATTR.DEAL_RENEWAL_DATE,
-      value,
+      dealsMap,
       selectorDisplay);
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".contact.email",
@@ -590,7 +594,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       PIPDRIVE_ATTR.CONTACT_EMAIL,
-      value,
+      dealsMap,
       selectorDisplay);
     S6Context.trace("_propertyValuesForDeals", res);
     return res;
@@ -601,38 +605,40 @@ class S6PropertyServiceBuilder {
     var defValue = EMPTY;
     var propId = S6Utility.trim(sheetValue[PROPERTIES.COLUMNS.PROP_ID]);
     var selectorDisplay = "[Selected Harvest Project]";
-    var projectValues = [];
+    var projectList = [];
+    var projectsMap = [];
 
     if (this.isForApplication()) {
       var domain = typeParameters[0];
       S6Context.debugFn("_propertyValuesForHarvestProjectss:", typeParameters);
       domain = S6Utility.replaceFieldInText(instance.data[INSTANCE.FIELDS], domain);
+ 
+      projectsMap = HarvestAPIService.getProjectsForClientDomainName(domain);
+      console.error("projectsMap",projectsMap);
 
-      var projects = HarvestAPIService.getProjectsForClientDomainName(domain);
-
-      projects[defValue] = {
+      projectsMap[defValue] = {
         [HARVEST_FIELDS.CODE]: EMPTY,
-        [HARVEST_FIELDS.NAME]: EMPTY
+        [HARVEST_FIELDS.NAME]: EMPTY,
+        [HARVEST_FIELDS.TITLE]: EMPTY
       }
-      S6Context.debugFn("_propertyValuesForHarvestProjectss: deals", projects, projects.length);
-      projectValues[0] = selectorDisplay;
-      projectValues[1] = EMPTY;
+      S6Context.debugFn("_propertyValuesForHarvestProjectss: deals", projectsMap, projectsMap.length);
+      projectList[0] = selectorDisplay;
+      projectList[1] = EMPTY;
       let x = 2;
-      for (var d in projects) {
-        projectValues[x++] = `${projects[d][HARVEST_FIELDS.CODE]} - ${projects[d][HARVEST_FIELDS.NAME]}`;
-        projectValues[x++] = projects[d][HARVEST_FIELDS.CODE];
+      for (var d in projectsMap) {
+        projectList[x++] = projectsMap[d][HARVEST_FIELDS.TITLE];
+        projectList[x++] = projectsMap[d][HARVEST_FIELDS.CODE];
       }
 
       if (x == 2) {
-        projectValues[0] = "[No Projects]";
-        projectValues[1] = EMPTY;
+        projectList[0] = "[No Projects]";
+        projectList[1] = EMPTY;
       }
-      var value = projects;
     }
 
-    S6Context.debugFn("_propertyValuesForHarvestProjects: projectValues", projectValues);
+    S6Context.debugFn("_propertyValuesForHarvestProjects: projectValues", projectList);
     let r = 0;
-
+    var sourcreField = S6PropertyServiceBuilder.makePropoertyName(nameSpace, propId);
 
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId,
@@ -642,15 +648,16 @@ class S6PropertyServiceBuilder {
       NO,
       NO,
       source,
-      projectValues,
+      EMPTY,
       nameSpace,
       YES,
-      EMPTY,
+      sourcreField,
       APPLY.TEXT,
-      EMPTY,
-      EMPTY,
-      selectorDisplay);
-    var sourcreField = res[0][PROPERTIES.ATTR.PROP_NAME];// this is the name of the filed above tyhat was just created and is the source selector 
+      HARVEST_FIELDS.TITLE,
+      projectsMap,
+      selectorDisplay,
+      projectList);
+
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".code",
       PROPERTIES.TYPES.SELECTED,
@@ -665,7 +672,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       HARVEST_FIELDS.CODE,
-      value,
+      projectsMap,
       selectorDisplay);
     res[r++] = S6PropertyServiceBuilder.propertyFactory(
       propId + ".name",
@@ -681,7 +688,7 @@ class S6PropertyServiceBuilder {
       sourcreField,
       APPLY.TEXT,
       HARVEST_FIELDS.NAME,
-      value,
+      projectsMap,
       selectorDisplay);
 
     S6Context.trace("_propertyValuesForDeals", res);
@@ -1189,8 +1196,8 @@ class S6PropertyServiceBuilder {
       nameSpace);
   }
 
-
-  static propertyFactory(propId, type, title, hint, editable, emptyMeansEmpty, source, value, nameSpace, visible = YES, fieldSource = EMPTY, apply = APPLY.TEXT, selector = EMPTY, selectorValues = {}, selectorDisplay = EMPTY) {
+ 
+  static propertyFactory(propId, type, title, hint, editable, emptyMeansEmpty, source, value, nameSpace, visible = YES, fieldSource = EMPTY, apply = APPLY.TEXT, selector = EMPTY, selectorMap = {}, selectorDisplay = EMPTY, selectorList)  {
     return {
       [PROPERTIES.ATTR.PROP_ID]: "{" + propId + "}",
       [PROPERTIES.ATTR.PROP_NAME]: S6PropertyServiceBuilder.makePropoertyName(nameSpace, propId),
@@ -1207,7 +1214,8 @@ class S6PropertyServiceBuilder {
       [PROPERTIES.ATTR.VISIBLE]: visible,
       [PROPERTIES.ATTR.APPLY]: apply,
       [PROPERTIES.ATTR.SELECTOR]: selector,
-      [PROPERTIES.ATTR.SELECTOR_VALUES]: selectorValues,
+      [PROPERTIES.ATTR.SELECTOR_MAP]: JSON.stringify(selectorMap),
+      [PROPERTIES.ATTR.SELECTOR_LIST]: selectorList,
       [PROPERTIES.ATTR.SELECTOR_DISPLAY]: selectorDisplay,
     };
 
