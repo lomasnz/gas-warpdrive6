@@ -12,6 +12,16 @@ function buildPropertiesApplyView(param) {
   var config = TASK_CONFIG[TASK_VALUES][task];
   var id = param.getEntityInstanceId();
   var nameSpace = param.getNameSpace();
+  var taskValue = EMPTY;
+
+  if (task === TASK_APPLY_PROPERTIES) {
+    taskValue = PROP_ACTION_REPLACE_VALUE;
+  }
+  else { //(task === TASK_BUILD_TEMPLATE) {
+    taskValue = PROP_ACTION_INSERT_FIELD;
+  }
+
+   console.error("Task it",task,taskValue);
 
   //var res = S6UIService.createCard("Apply Propoerties", "Update docuyment fields with propoerties", ICON_SCATTER_URL);
   var res = S6UIService.createCard(config.title, config.hint, config.icon);
@@ -27,9 +37,9 @@ function buildPropertiesApplyView(param) {
   var secInfo = S6UIService.createSection("Poperties Action");
 
   secInfo.addWidget(S6UIService.createInputForType("InsertType",
-    "Select the type of action", config.pairedlist,
+    "Select the action", config.pairedlist,
     "",
-    "value",
+    taskValue,
     { selectionInputType: CardService.SelectionInputType.RADIO_BUTTON },
     "onChangeAction_InsertyType"));
   secInfo.addWidget(S6UIService.createIconLabel(`Select a single property to apply the action to. Or use the ACTION ALL button below to apply to all.`, EMPTY, ICON_DOUBLE_ARROW_LEFT));
@@ -106,12 +116,12 @@ There are four types of document properties:
       for (item in docPropsAuto) {
         var apply = APPLY.TEXT;
         var type = PROPERTIES.TYPES.TEXT;
-        
+
         var title = docPropsAuto[item].title;
         var field = docPropsAuto[item].field;
         var value = docPropsAuto[item].value;
         var hint = `{${title}} from this document`;
-         S6Context.info("docPropsAuto[item]",docPropsAuto[item]);
+        S6Context.info("docPropsAuto[item]", docPropsAuto[item]);
         if (value.startsWith("https://")) {
           type = PROPERTIES.TYPES.LINK;
           apply = APPLY.LINK;

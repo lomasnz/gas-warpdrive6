@@ -144,8 +144,8 @@ const TASK_CONFIG =
       "aboutToInfo": "About Building a Template",
       "fileExists": "fileExists.",
       "endWarning": "endWarning",
-      "pairedlist": `pairedlist[Insert property ID (at cursor), ${PROP_ACTION_INSERT_FIELD}, Insert title: property ID (at cursor), ${PROP_ACTION_INSERT_TITLE_FIELD}]`,
-      "deepHelp": `Properties are items that have a <b>title</b> (or name), a <b>value</b>, and a <b>property name</b>. From here you can insert a <b>property ID</b> or <b>title: property ID</b> in this document. You can do this for a single item. Or you can <b><font color='${PRIMARY_COLOUR}'>ACTION ALL</font></b> at once with the button at the footer. You can also create your own <b>Document Prooerties</b>, which are described below.`,
+      "pairedlist": `pairedlist[Insert property ID at cursor, ${PROP_ACTION_INSERT_FIELD}, Insert title: property ID at cursor, ${PROP_ACTION_INSERT_TITLE_FIELD}]`,
+      "deepHelp": `Properties are items that have a <b>title</b> (or name), a <b>value</b>, and a <b>property ID</b>. From here you can insert a <b>property ID</b> or <b>title: property ID</b> in this document. You can do this for a single item. Or you can <b><font color='${PRIMARY_COLOUR}'>ACTION ALL</font></b> at once with the button at the footer. You can also create your own <b>Document Prooerties</b>, which are described below.`,
       "hint": "Insert properties into this document",
       "choose": " using the current entity",
       "choose1": " using a different ",
@@ -363,8 +363,9 @@ function buildFileActionView(param) {
 
     param.setValue(PARAM.TASK_TYPE, TASK_AI);
     param.replaceJSON(PARAM.FIELDS, null);
-    contentSection.addWidget(S6UIService.createActionLabel("OpenAI GPT", `Work with this document using OpenAI's ChatGPT, powered by it GPT large language models`, ICON_OPEN_AI_URL, actionAITextProcessor.name, param.toJSON()))
-    contentSection.addWidget(S6UIService.createDivider());
+    // remove OpenAI option
+    //contentSection.addWidget(S6UIService.createActionLabel("OpenAI GPT", `Work with this document using OpenAI's ChatGPT, powered by it GPT large language models`, ICON_OPEN_AI_URL, actionAITextProcessor.name, param.toJSON()))
+    //contentSection.addWidget(S6UIService.createDivider());
   }
 
 

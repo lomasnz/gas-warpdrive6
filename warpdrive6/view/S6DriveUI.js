@@ -1,3 +1,4 @@
+ FOLDERS_PER_PAGE = 70;
 const ViewType =
 {
   DETAIL: "DETAIL",
@@ -250,7 +251,7 @@ function buidEditView(param) {
 function buildTemplateEditorWorker_(entity, instance, param) {
   var res;
 
-  var card = S6UIService.createCard("New Folders and Files", "Select a template", ICON_POST_ADD_URL);
+  var card = S6UIService.createCard("New Folders and Files", "Select a template", ICON_POST_ADD_URL, instance.data[INSTANCE.INSTANCE_ID]);
   card.setDisplayStyle(CardService.DisplayStyle.REPLACE);
   var sectionVariables = S6UIService.createSection(entity.config[ENTITY.NAME_SINGUAL] + ":");
 
@@ -483,6 +484,34 @@ function indexIt(listDataType, section, index, name, initial = true, bold) {
   }
   return index;
 }
+
+
+/**
+ * Navigates between pages of the folder list.
+ * @param {Object} e - Event object containing navigation parameters
+ * @return {CardService.ActionResponse} Action response to navigate to the next or previous page
+ */
+function navigatePage(e) {
+  var param = new Param(e);
+  // var currentPage = parseInt(S6Utility.trim(param.getValue(PARAM.CURRENT_PAGE),0));
+  // var direction = param.getValue(PARAM.PAGE_DIRECTION);
+
+  // if (direction === 'next') {
+  //   currentPage++;
+  // } else if (direction === 'back') {
+  //   currentPage--;
+  // }
+  // param.setValue(PARAM.PAGE_DIRECTION,currentPage);
+
+  var entity = S6Entity.newFromNameSpace(param.getNameSpace());
+  var card = createListManagedFolderCard(entity, param);
+
+  return CardService.newActionResponseBuilder()
+    .setNavigation(CardService.newNavigation().updateCard(card))
+    .build();
+}
+
+
 /**
  * 
  */
@@ -572,7 +601,9 @@ function createListManagedFolderCard(entity, param) {
         iconURL = ICON_DRIVE_URL;
       }
       S6Context.time("DriveUI get Folders");
+
       const folders = S6DriveApp.getFoldersAtDepth(folder, vars.depth);
+
       S6Context.timeEnd("DriveUI get Folders");
       const unsortedFolders = new Map();
 
@@ -628,7 +659,15 @@ function createListManagedFolderCard(entity, param) {
         }
         item = {};
       }
-      const sortedFolders = sortListItem(keys);
+      const sortedFoldersPreSliced = sortListItem(keys);
+
+      const currentPage = parseInt(S6Utility.trim(param.getValue(PARAM.CURRENT_PAGE), 0));
+      const folderCount = sortedFoldersPreSliced.length;
+      const totalPages = Math.ceil(folderCount / FOLDERS_PER_PAGE);
+      const startIndex = currentPage * FOLDERS_PER_PAGE;
+      const endIndex = Math.min(startIndex + FOLDERS_PER_PAGE, folderCount);
+      console.error("Slice, totalPages, currentPage, startIndex, endIndex", totalPages, currentPage, startIndex, endIndex);
+      const sortedFolders = sortedFoldersPreSliced.slice(startIndex, endIndex);
 
       let index = EMPTY;
       let groupByIndex = EMPTY;
@@ -655,7 +694,7 @@ function createListManagedFolderCard(entity, param) {
             let icon = _helpChooseIcon(entity, vars.iconURL, name);
             let label = S6UIService.createActionLabel(name, subLabel, icon, vars.functionName, param.toJSON(), vars.icon);
             if (vars.sortByType == DATA_TYPE_DATE) {
-              label.setTopLabel(Utilities.formatDate(new Date(sortedFolders[i][1]), Session.getTimeZone(), "d MMMM yyyy"));
+              label.setTopLabel(Utilities.formatDate(new Date(sortedFolders[i][1]), Session.getScriptTimeZone(), "d MMMM yyyy"));
             }
             section.addWidget(label);
             S6Context.timeEnd("DriveUI add ListItem" + item[ITEM.name]);
@@ -663,6 +702,25 @@ function createListManagedFolderCard(entity, param) {
         }
       }
       res.addSection(section);
+      if (totalPages > 1) {
+        var nextButton;
+        var backButton;
+        if (currentPage > 0) {
+          param.setValue(PARAM.CURRENT_PAGE, currentPage - 1);
+          param.setValue(PARAM.PAGE_DIRECTION, "back");
+          nextButton = S6UIService.createCreateButton("Back ◀️", "navigatePage", param.toJSON());
+          nextButton.setBackgroundColor("#000000");
+        }
+        if (currentPage < totalPages - 1) {
+          param.setValue(PARAM.CURRENT_PAGE, currentPage + 1);
+          param.setValue(PARAM.PAGE_DIRECTION, "next");
+          backButton = S6UIService.createCreateButton("Next ▶️", "navigatePage", param.toJSON());
+          backButton.setBackgroundColor("#000000");
+        }
+        var ff = S6UIService.createFooter(backButton == null ? nextButton : backButton, backButton == null ? null : nextButton);
+        res.setFixedFooter(ff);
+
+      }
     }
   }
   catch (err) {
@@ -671,6 +729,7 @@ function createListManagedFolderCard(entity, param) {
   }
   return res.build();
 }
+
 function _helpChooseIcon(entity, defaultIcon, name) {
   S6Context.time(`Choose Icon for ${entity} and ${name}`);
   var res = defaultIcon;
@@ -825,7 +884,10 @@ function buildCreateDocFromTemplateView(param) {
   var footer = S6UIService.createFooter(butHome);
   card.setFixedFooter(footer);
 
-  var navGoHome = CardService.newNavigation().popToNamedCard(entity.config[ENTITY.NAME_SPACE]);
+  // var navGoHome = CardService.newNavigation().popToNamedCard(entity.config[ENTITY.NAME_SPACE]);
+  console.error("popToNamedCard", param.getValue(PARAM.ENTITY_INSTANCE_ID));
+  var navGoHome = CardService.newNavigation().popToNamedCard(param.getValue(PARAM.ENTITY_INSTANCE_ID));
+
   var notify = CardService.newNotification().setText("New file created from template and opend in a new tab. If it does not open you may have a pop-up blocker on.");
   var openLink = CardService.newOpenLink().setUrl(newFileUrl);
 
@@ -909,16 +971,17 @@ function cacheAllEntities(master) {
   S6Context.info("Cache " + count);
   S6Context.info("Cache templates", S6MasterTemplate.new());
   //S6Hyperdrive.engage(cacheAllEntities.name, master);
-  
+
   return true;
 }
 
 
 function buildManageEntityCardsFromMaster(masterUrl) {
-  var res = S6UIService.createCard("Manage SECTION6 Drive Entities", "Folders and Files", ICON_S6_URL);
+  var res = S6UIService.createCard("Manage Drive Entities", "Folders and Files", ICON_S6_URL);
   var master = S6Master.newMaster(masterUrl);
-  S6Hyperdrive.engage(cacheAllEntities.name, master);
-
+  cacheAllEntities(master);
+ // S6Hyperdrive.engage(cacheAllEntities.name, master);
+ 
   var sec;
   console.log("master.configs", JSON.stringify(master.configs));
   for (let h = 0; h < master.configs.length; h++) {
@@ -1036,7 +1099,7 @@ function buildMainEntityView(param) {
     if (entity.config[ENTITY.SOP_CONFLUENCE] != "") {
       let openParam = new Param();
       openParam.addValue(PARAM.URL, entity.config[ENTITY.SOP_CONFLUENCE]);
-      section.addWidget(S6UIService.createActionLabelOpen("Confleunce documentation", "Standard operating procedure", ICON_ATLASSIAN_URL, actionEventOpenLink.name, openParam.toJSON()));
+      section.addWidget(S6UIService.createActionLabelOpen("Notion documentation", "Standard operating procedure", ICON_NOTION_URL, actionEventOpenLink.name, openParam.toJSON()));
     }
   }
   catch (err) {
@@ -1092,7 +1155,13 @@ function buildOpenLinkView(param) {
   var url = param.getValue(PARAM.URL);
   S6Context.debug("open url:", url);
 
-  res = CardService.newUniversalActionResponseBuilder()
+  // res = CardService.newUniversalActionResponseBuilder()
+  //   .setOpenLink(CardService.newOpenLink()
+  //     .setOpenAs(CardService.OpenAs.FULL_SIZE)
+  //     .setUrl(url))
+  //   .build()
+  //   ;
+  res = CardService.newActionResponseBuilder()
     .setOpenLink(CardService.newOpenLink()
       .setOpenAs(CardService.OpenAs.FULL_SIZE)
       .setUrl(url))

@@ -24,8 +24,8 @@
       },
       {
         "userSymbol": "Docs",
-        "version": "v1",
-        "serviceId": "docs"
+        "serviceId": "docs",
+        "version": "v1"
       }
     ],
     "libraries": [
@@ -36,8 +36,8 @@
       },
       {
         "userSymbol": "OAuth2",
-        "version": "43",
-        "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF"
+        "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF",
+        "version": "43"
       }
     ]
   },
@@ -97,16 +97,18 @@
     "https://script.googleapis.com/v1/projects",
     "https://pubsub.googleapis.com/v1/projects/s6-g-tools/topics/",
     "https://secretmanager.googleapis.com/v1/projects/s6-g-tools",
-    "https://secretmanager.googleapis.com/v1/projects/"
+    "https://secretmanager.googleapis.com/v1/projects/",
+    "https://www.notion.so/section6/",
+    "https://notion.so/section6/"
   ],
   "runtimeVersion": "V8",
   "addOns": {
     "common": {
-      "name": "WARP DRIVE6",
-      "logoUrl": "https://lh3.googleusercontent.com/-BA_sFlZaD40/YtjskUmaleI/AAAAAAAAAqg/2RvA2UkhG6ElCiTKVMZ0fySOKXmjQSFwQCNcBGAsYHQ/s400/32%2Bx%2B32%2Bhopferly-02.png",
+      "name": "WARP DRIVE",
+      "logoUrl": "https://github.com/lomasnz/public-resources/blob/main/misc-icons/warpdriv5.png?raw=true",
       "layoutProperties": {
-        "primaryColor": "#61166d",
-        "secondaryColor": "#424242"
+        "primaryColor": "#0379f5",
+        "secondaryColor": "#2196F3"
       },
       "useLocaleFromApp": true,
       "homepageTrigger": {

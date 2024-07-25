@@ -98,10 +98,11 @@ function buildPropertiesApply(entity, id, nameSpace, docId, fields) {
   res.addSection(secHelp);
   var secInfo = S6UIService.createSection("Poperties Action");
 
-  secInfo.addWidget(S6UIService.createInputForType("InsertType", "Select the type of action", DATA_TYPE_PAIRED_LIST +
-    `[Replace field name with its value,${PROP_ACTION_REPLACE_VALUE},Insert value,${PROP_ACTION_INSERT_VALUE},Replace field name wiith title: value,${PROP_ACTION_REPLACE_TITLE_VALUE},Insert title: value,${PROP_ACTION_INSERT_TITLE_VALUE}]`,
+  secInfo.addWidget(S6UIService.createInputForType("InsertType", "Select the action to perform", DATA_TYPE_PAIRED_LIST +
+    `[Replace field name with its value,${PROP_ACTION_REPLACE_VALUE},Insert value,${PROP_ACTION_INSERT_VALUE},Replace field name wiith title: value,
+    ${PROP_ACTION_REPLACE_TITLE_VALUE},Insert title: value,${PROP_ACTION_INSERT_TITLE_VALUE}]`,
     "",
-    "value",
+    PROP_ACTION_REPLACE_VALUE,
     { selectionInputType: CardService.SelectionInputType.RADIO_BUTTON },
     "onChangeAction_InsertyType"));
   secInfo.addWidget(S6UIService.createIconLabel("Select a single property to apply the action to.", "Inserts are applied at current your curosr position", ICON_REPLY_ALL_URL));
@@ -111,18 +112,18 @@ function buildPropertiesApply(entity, id, nameSpace, docId, fields) {
   return _buildProperties(res, entity, id, nameSpace, docId, fields);
 
 }
-
+ 
 function buildPropertiesBuildTemplate(entity, id, nameSpace, docId, fields) {
-
+ 
   var res = S6UIService.createCard("Build Template", "Use properties to build a template", ICON_CODE_URL);
   var secHelp = S6UIService.createHelpSection("Building a Template", "", `Properties are items that have a <b>title</b> (or name), a <b>value</b>, and a <b>field name</b>. From here you can replace a <b>field name</b> in this document with its <b>value</b> or <b>title: value</b>. You can choose to do this for a single item or, more conveniently, you can <b><font color='${PRIMARY_COLOUR}'>ACTION ALL</font></b> at once with the button at the footer.<br><br>Alternatively, directly insert properties into this document. When you insert, the action is executed at your cursor's current location in this document. <br><br>If you want to build a template, then you will want to choose actions that insert the <b>filed name</b>.<br><br>Filed name's take the format of {name.space#field.name}`, true);
   res.addSection(secHelp);
   var secInfo = S6UIService.createSection("Poperties Action");
 
-  secInfo.addWidget(S6UIService.createInputForType("InsertType", "Select the type of action", DATA_TYPE_PAIRED_LIST +
+  secInfo.addWidget(S6UIService.createInputForType("InsertType", "Select the action to perform", DATA_TYPE_PAIRED_LIST +
     `[Replace field name with its value,${PROP_ACTION_REPLACE_VALUE},Insert value,${PROP_ACTION_INSERT_VALUE},Replace field name wiith title: value,${PROP_ACTION_REPLACE_TITLE_VALUE},Insert title: value,${PROP_ACTION_INSERT_TITLE_VALUE},Insert field name,${PROP_ACTION_INSERT_FIELD},Insert title: field name,${PROP_ACTION_INSERT_TITLE_FIELD}]`,
     "",
-    "value",
+    PROP_ACTION_REPLACE_VALUE,
     { selectionInputType: CardService.SelectionInputType.RADIO_BUTTON },
     "onChangeAction_InsertyType"));
   secInfo.addWidget(S6UIService.createIconLabel("Select a single property to apply the action to.", "Inserts are applied at current your curosr position", ICON_REPLY_ALL_URL));
@@ -170,7 +171,7 @@ function _buildProperties(resCard, entity, id, nameSpace, docId, fields) {
   secFields.addWidget(S6UIService.createInfoLabel("This " + entity + " core properties."));
   _addFields(id, docId, nameSpace, fields, paramALL, secFields);
   resCard.addSection(secFields);
-
+ 
   for (let i = 0; i < config[PROPERTIES_SHEETS].length; i++) {
     var nextSheet = propsSpredSheet.getSheetByName(config[PROPERTIES_SHEETS][i]);
     if (S6Utility.trim(config[PROPERTIES_SHEETS][i]) != "") {
