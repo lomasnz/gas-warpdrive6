@@ -1,0 +1,7 @@
+[submodule "gas-base"]
+	path = gas-base
+	url = https://github.com/lomasnz/gas-base.git
+[submodule "gas-services"]
+	path = gas-services
+	url = https://github.com/lomasnz/gas-services.git
+
